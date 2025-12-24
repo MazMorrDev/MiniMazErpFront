@@ -6,7 +6,7 @@ import { Component, OnInit, signal } from '@angular/core';
   styleUrls: ['./inventory_grid.component.css']
 })
 export class InventoryGridComponent implements OnInit {
-  isLoading = signal(false); // testing -- remover antes de pushear
+  isLoading = signal(false);
   constructor() { }
 
   ngOnInit(): void {
