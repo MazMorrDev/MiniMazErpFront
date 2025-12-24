@@ -11,57 +11,6 @@
     color: #333;
   }
 
-  .header {
-    background: white;
-    padding: 12px 24px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 16px;
-  }
-
-  .logo-icon {
-    width: 24px;
-    height: 24px;
-    background: #3b82f6;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-  }
-
-  .nav {
-    display: flex;
-    gap: 32px;
-  }
-
-  .nav a {
-    text-decoration: none;
-    color: #6b7280;
-    font-size: 14px;
-    padding: 8px 0;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-  }
-
-  .nav a.active {
-    color: #3b82f6;
-    border-bottom-color: #3b82f6;
-  }
-
-  .nav a:hover {
-    color: #3b82f6;
-  }
 
   .container {
     max-width: 1400px;
@@ -196,200 +145,6 @@
     background: #2563eb;
   }
 
-  .table-container {
-    background: white;
-    border-radius: 8px;
-    margin-top: 20px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead {
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 12px;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  td {
-    padding: 16px;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 14px;
-  }
-
-  tr:hover {
-    background: #f9fafb;
-  }
-
-  .product-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .product-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
-    background: #f3f4f6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-
-  .product-info h3 {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 2px;
-  }
-
-  .product-info p {
-    font-size: 12px;
-    color: #9ca3af;
-  }
-
-  .category-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .category-electronics {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-
-  .category-furniture {
-    background: #f3e8ff;
-    color: #7c3aed;
-  }
-
-  .category-accessories {
-    background: #fed7aa;
-    color: #c2410c;
-  }
-
-  .stock-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .stock-bar {
-    width: 60px;
-    height: 6px;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .stock-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-  }
-
-  .stock-high {
-    background: #22c55e;
-  }
-
-  .stock-medium {
-    background: #eab308;
-  }
-
-  .stock-low {
-    background: #ef4444;
-  }
-
-  .stock-count {
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .stock-label {
-    font-size: 11px;
-    color: #9ca3af;
-  }
-
-  .location-cell {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #6b7280;
-    font-size: 13px;
-  }
-
-  .action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    color: #9ca3af;
-  }
-
-  .action-btn:hover {
-    color: #374151;
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 20px;
-    background: white;
-    border-top: 1px solid #f3f4f6;
-  }
-
-  .pagination-info {
-    font-size: 14px;
-    color: #6b7280;
-    margin-right: auto;
-    margin-left: 16px;
-  }
-
-  .pagination button {
-    width: 32px;
-    height: 32px;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    background: white;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .pagination button:hover {
-    background: #f9fafb;
-  }
-
-  .pagination button.active {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-  }
-
-  .pagination button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .menu-icon {
     width: 20px;
     height: 20px;
@@ -399,270 +154,42 @@
   }
 </style>
 
-<body>
-  <header class="header">
-    <div class="logo">
-      <div class="logo-icon">📦</div>
-      Inventory Manager
-    </div>
-    <nav class="nav">
-      <a href="#" class="active">Dashboard</a>
-      <a href="#">Inventory</a>
-      <a href="#">Reports</a>
-      <a href="#">Settings</a>
-    </nav>
-  </header>
+<app-navbar />
 
-  <div class="container">
-    <div class="page-header">
-      <h1>Product Inventory</h1>
-      <p>Manage stock levels, pricing, and locations across all warehouses.</p>
-    </div>
+<div class="container">
+  <div class="page-header">
+    <h1>Product Inventory</h1>
+    <p>Manage stock levels, pricing, and locations across all warehouses.</p>
+  </div>
 
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Search by name, ID, or SKU...">
-        </div>
-        <button class="filter-btn">Filters</button>
-        <select class="dropdown">
-          <option>Warehouse: All</option>
-        </select>
-        <select class="dropdown">
-          <option>Category: All</option>
-        </select>
-        <label class="low-stock-toggle">
-          <input type="checkbox">
-          <span>⚠️ Low Stock Only</span>
-        </label>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search by name, ID, or SKU...">
       </div>
-      <div class="toolbar-right">
-        <button class="btn-export">
-          <span>📥</span> Export CSV
-        </button>
-        <button class="btn-add">
-          <span>+</span> Add Product
-        </button>
-      </div>
+      <button class="filter-btn">Filters</button>
+      <select class="dropdown">
+        <option>Warehouse: All</option>
+      </select>
+      <select class="dropdown">
+        <option>Category: All</option>
+      </select>
+      <label class="low-stock-toggle">
+        <input type="checkbox">
+        <span>⚠️ Low Stock Only</span>
+      </label>
     </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>PRODUCT</th>
-            <th>CATEGORY</th>
-            <th>STOCK LEVEL</th>
-            <th>COST</th>
-            <th>SELLING PRICE</th>
-            <th>LOCATION</th>
-            <th>ACTION</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>#ITW-001</td>
-            <td>
-              <div class="product-cell">
-                <div class="product-img">💻</div>
-                <div class="product-info">
-                  <h3>MacBook Pro M3</h3>
-                  <p>High-performance laptop</p>
-                </div>
-              </div>
-            </td>
-            <td><span class="category-badge category-electronics">Electronics</span></td>
-            <td>
-              <div class="stock-indicator">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <div class="stock-bar" style="background: #dcfce7;">
-                    <div class="stock-bar-fill stock-high" style="width: 84%;"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="stock-count" style="color: #22c55e;">42</div>
-                  <div class="stock-label">units</div>
-                </div>
-              </div>
-            </td>
-            <td>$1,299.00</td>
-            <td>$2,499.00</td>
-            <td>
-              <div class="location-cell">
-                <span>📍</span> Main Warehouse
-              </div>
-            </td>
-            <td>
-              <button class="action-btn">
-                <div class="menu-icon">⋮</div>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>#ITW-002</td>
-            <td>
-              <div class="product-cell">
-                <div class="product-img">🪑</div>
-                <div class="product-info">
-                  <h3>ErgoChair Pro</h3>
-                  <p>Ergonomic office swivel</p>
-                </div>
-              </div>
-            </td>
-            <td><span class="category-badge category-furniture">Furniture</span></td>
-            <td>
-              <div class="stock-indicator">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <div class="stock-bar" style="background: #fecaca;">
-                    <div class="stock-bar-fill stock-low" style="width: 20%;"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="stock-count" style="color: #ef4444;">3</div>
-                  <div class="stock-label">units</div>
-                </div>
-              </div>
-            </td>
-            <td>$245.50</td>
-            <td>$399.00</td>
-            <td>
-              <div class="location-cell">
-                <span>📍</span> Store A
-              </div>
-            </td>
-            <td>
-              <button class="action-btn">
-                <div class="menu-icon">⋮</div>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>#ITW-003</td>
-            <td>
-              <div class="product-cell">
-                <div class="product-img">📷</div>
-                <div class="product-info">
-                  <h3>Sony WH-1000XM5</h3>
-                  <p>Noise canceling ears</p>
-                </div>
-              </div>
-            </td>
-            <td><span class="category-badge category-electronics">Electronics</span></td>
-            <td>
-              <div class="stock-indicator">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <div class="stock-bar" style="background: #fef3c7;">
-                    <div class="stock-bar-fill stock-medium" style="width: 36%;"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="stock-count" style="color: #eab308;">18</div>
-                  <div class="stock-label">units</div>
-                </div>
-              </div>
-            </td>
-            <td>$298.00</td>
-            <td>$349.00</td>
-            <td>
-              <div class="location-cell">
-                <span>📍</span> Retail Display
-              </div>
-            </td>
-            <td>
-              <button class="action-btn">
-                <div class="menu-icon">⋮</div>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>#ITW-004</td>
-            <td>
-              <div class="product-cell">
-                <div class="product-img">⌨️</div>
-                <div class="product-info">
-                  <h3>Keychron K2</h3>
-                  <p>Mechanical RGB Wireless</p>
-                </div>
-              </div>
-            </td>
-            <td><span class="category-badge category-accessories">Accessories</span></td>
-            <td>
-              <div class="stock-indicator">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <div class="stock-bar" style="background: #dcfce7;">
-                    <div class="stock-bar-fill stock-high" style="width: 92%;"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="stock-count" style="color: #22c55e;">156</div>
-                  <div class="stock-label">units</div>
-                </div>
-              </div>
-            </td>
-            <td>$65.00</td>
-            <td>$99.00</td>
-            <td>
-              <div class="location-cell">
-                <span>📍</span> Main Warehouse
-              </div>
-            </td>
-            <td>
-              <button class="action-btn">
-                <div class="menu-icon">⋮</div>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>#ITW-005</td>
-            <td>
-              <div class="product-cell">
-                <div class="product-img">⌚</div>
-                <div class="product-info">
-                  <h3>Galaxy Watch 5</h3>
-                  <p>Fitness Bluetooth Graphite</p>
-                </div>
-              </div>
-            </td>
-            <td><span class="category-badge category-electronics">Electronics</span></td>
-            <td>
-              <div class="stock-indicator">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <div class="stock-bar" style="background: #fecaca;">
-                    <div class="stock-bar-fill stock-low" style="width: 2%;"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="stock-count" style="color: #ef4444;">1</div>
-                  <div class="stock-label">left</div>
-                </div>
-              </div>
-            </td>
-            <td>$189.00</td>
-            <td>$279.00</td>
-            <td>
-              <div class="location-cell">
-                <span>📍</span> Retail Display
-              </div>
-            </td>
-            <td>
-              <button class="action-btn">
-                <div class="menu-icon">⋮</div>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="pagination">
-        <div class="pagination-info">Showing 1 to 5 of 142 results</div>
-        <button disabled>‹</button>
-        <button class="active">1</button>
-        <button>2</button>
-        <button>3</button>
-        <button>...</button>
-        <button>14</button>
-        <button>›</button>
-      </div>
+    <div class="toolbar-right">
+      <button class="btn-export">
+        <span>📥</span> Export CSV
+      </button>
+      <button class="btn-add">
+        <span>+</span> Add Product
+      </button>
     </div>
   </div>
+
+  <!-- mover table a componente independiente -->
+  <router-outlet />
+</div>
