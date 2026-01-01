@@ -2,15 +2,23 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: '',
-    loadComponent: () => import('./pages/products-page/products_page.component').then(m => m.ProductsPageComponent)
+    path: 'login',
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
-    path: 'mov-inv',
-    loadComponent: () => import('./pages/movimientos-inventario-page/mov_inv_page.component').then(m => m.MovInvPageComponent)
+    path: '',
+    canActivate: [AuthGuard],
+    loadComponent: () => import('./pages/main/main').then((m) => m.Main),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./pages/home/home').then((m) => m.Home)
+      },
+    ],
   },
   {
     path: '**',
-    redirectTo: ''
-  }
+    redirectTo: '',
+  },
 ];
