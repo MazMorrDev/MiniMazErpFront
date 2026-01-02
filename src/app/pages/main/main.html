@@ -1,1 +1,37 @@
-<p>main works!</p>
+<app-navbar />
+
+<div class="container">
+  <div class="page-header">
+    <h1>Product Inventory</h1>
+    <p>Manage stock levels, pricing, and locations across all warehouses.</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search by name, ID, or SKU...">
+      </div>
+      <button class="filter-btn">Filters</button>
+      <select class="dropdown">
+        <option>Warehouse: All</option>
+      </select>
+      <select class="dropdown">
+        <option>Category: All</option>
+      </select>
+      <label class="low-stock-toggle">
+        <input type="checkbox">
+        <span>⚠️ Low Stock Only</span>
+      </label>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-export">
+        <span>📥</span> Export CSV
+      </button>
+      <button class="btn-add">
+        <span>+</span> Add Product
+      </button>
+    </div>
+  </div>
+
+  <!-- mover table a componente independiente -->

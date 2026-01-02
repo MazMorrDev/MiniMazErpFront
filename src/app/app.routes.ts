@@ -8,12 +8,12 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [authGuard],
     loadComponent: () => import('./pages/main/main').then((m) => m.Main),
     children: [
       {
         path: '',
         pathMatch: 'full',
+        canActivate: [authGuard],
         loadComponent: () => import('./pages/home/home').then((m) => m.Home),
       },
     ],
