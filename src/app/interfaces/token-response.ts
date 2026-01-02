@@ -1,4 +1,4 @@
-export interface TokenResponse {
+export interface ApiTokenResponse {
     expiration: string;
     token: string;
 }
