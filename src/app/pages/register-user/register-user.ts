@@ -6,20 +6,20 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 
-
 @Component({
-  selector: 'app-login',
+  selector: 'app-register-user',
   imports: [
-    FormsModule,
     MatInputModule,
-    MatButtonModule,
+    MatIconModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatIconModule],
-  templateUrl: './login.html',
-  styleUrl: './login.scss',
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule
+  ],
+  templateUrl: './register-user.html',
+  styleUrl: './register-user.scss',
 })
-export class Login {
+export class RegisterUser {
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;

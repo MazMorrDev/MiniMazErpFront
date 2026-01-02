@@ -1,12 +1,12 @@
-<mat-card class="login-card">
-  <mat-card-header class="login-title">
+<mat-card class="register-card">
+  <mat-card-header class="register-title">
     <mat-card-title>
-      <h2>Inicie Sesión</h2>
+      <h2>Regístrese</h2>
     </mat-card-title>
   </mat-card-header>
 
   <mat-card-content>
-    <form (ngSubmit)="onSubmit()" class="login-form">
+    <form (ngSubmit)="onSubmit()" class="register-form">
       <!-- Name Field -->
       <mat-form-field class="full-width">
         <mat-label>Nombre</mat-label>
@@ -15,12 +15,12 @@
           [(ngModel)]="name" 
           name="name"
           type="name" 
-          placeholder="Marco Antonio"
+          placeholder="Pepe Juaréz"
           required
-          #nameInput="ngModel">
+          #emailInput="ngModel">
         <mat-icon matSuffix>person</mat-icon>
         
-        @if (nameInput.invalid && nameInput.touched) {
+        @if (emailInput.invalid && emailInput.touched) {
           <mat-error>
             Por favor ingresa un email válido
           </mat-error>
@@ -69,16 +69,16 @@
         mat-raised-button 
         color="primary" 
         type="submit"
-        class="login-button"
+        class="register-button"
         [disabled]="!name || !password || password.length < 6">
-        Iniciar Sesión
+        Registrarse
       </button>
     </form>
   </mat-card-content>
 
   <mat-card-actions>
     <div style="text-align: center; width: 100%; margin-top: 1rem;">
-      <a href="/register" mat-button color="accent">Registrese Aquí</a>
+      <a href="/login" mat-button color="accent">Volver Atrás</a>
     </div>
   </mat-card-actions>
 </mat-card>
