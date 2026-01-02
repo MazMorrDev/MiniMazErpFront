@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-mov-inv-page',
-  template: ` <h3>Movimientos de Inventario Page</h3> `,
+  selector: 'app-mov-inv',
+  template: ` <h3>Inventory Movements Page</h3> `,
   styles: [``]
 })
 export class MovInvPageComponent implements OnInit {
