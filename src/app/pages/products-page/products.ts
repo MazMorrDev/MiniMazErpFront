@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { InventoryGridComponent } from "../../components/inventory-grid/inventory_grid.component";
+import { InventoryGridComponent } from "../../components/inventory-grid/inventory_grid";
 
 @Component({
   selector: 'app-products',
