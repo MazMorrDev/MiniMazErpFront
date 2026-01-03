@@ -2,18 +2,6 @@
 <app-navbar />
 
 <div class="container">
-  <!-- Header -->
-  <mat-card class="header-card">
-    <mat-card-header>
-      <mat-card-title>
-        <h1 class="page-title">Product Inventory</h1>
-      </mat-card-title>
-      <mat-card-subtitle>
-        Manage stock levels, pricing, and locations across all warehouses.
-      </mat-card-subtitle>
-    </mat-card-header>
-  </mat-card>
-
   <!-- Toolbar -->
   <mat-card class="toolbar-card">
     <mat-card-content>
@@ -25,29 +13,6 @@
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>
 
-        <!-- Warehouse Filter -->
-        <mat-form-field appearance="outline">
-          <mat-label>Warehouse</mat-label>
-          <mat-select [(ngModel)]="selectedWarehouse">
-            <mat-option value="all">All Warehouses</mat-option>
-            <mat-option value="north">North Warehouse</mat-option>
-            <mat-option value="south">South Warehouse</mat-option>
-            <mat-option value="east">East Warehouse</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Category Filter -->
-        <mat-form-field appearance="outline">
-          <mat-label>Category</mat-label>
-          <mat-select [(ngModel)]="selectedCategory">
-            <mat-option value="all">All Categories</mat-option>
-            <mat-option value="electronics">Electronics</mat-option>
-            <mat-option value="clothing">Clothing</mat-option>
-            <mat-option value="food">Food</mat-option>
-            <mat-option value="tools">Tools</mat-option>
-          </mat-select>
-        </mat-form-field>
-
         <!-- Low Stock Toggle -->
         <mat-checkbox [(ngModel)]="lowStockOnly" color="warn" class="low-stock-toggle">
           <mat-icon>warning</mat-icon> Low Stock Only
@@ -55,9 +20,6 @@
       </div>
 
       <div class="toolbar-actions">
-        <button mat-stroked-button color="primary" class="export-btn">
-          <mat-icon>download</mat-icon> Export CSV
-        </button>
         <button mat-raised-button color="primary" class="add-btn">
           <mat-icon>add</mat-icon> Add Product
         </button>

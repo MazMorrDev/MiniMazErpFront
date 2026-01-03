@@ -1,4 +1,3 @@
-// main.ts
 import { Component } from '@angular/core';
 import { NavbarComponent } from "../../components/navbar/navbar";
 import { MatCardModule } from '@angular/material/card';
@@ -29,8 +28,6 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './main.scss',
 })
 export class Main {
-  selectedWarehouse: string = 'all';
-  selectedCategory: string = 'all';
   lowStockOnly: boolean = false;
   searchQuery: string = '';
 }

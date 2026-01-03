@@ -18,6 +18,7 @@ import { MovementService } from '../../services/movement.service';
 import { Product } from '../../interfaces/product';
 import { Movement } from '../../interfaces/movement';
 import { FormsModule } from '@angular/forms';
+import { NavbarComponent } from "../../components/navbar/navbar";
 
 @Component({
   standalone: true,
@@ -38,8 +39,9 @@ import { FormsModule } from '@angular/forms';
     MatTooltipModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    DatePipe
-  ],
+    DatePipe,
+    NavbarComponent
+],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './movements.html',
   styleUrl: './movements.scss'
