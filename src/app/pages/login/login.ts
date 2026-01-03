@@ -38,7 +38,7 @@ export class Login {
 
       this.loginService.login(loginData).subscribe({
         next: (response) => {
-          console.log("Login exitoso", response);
+
           // Guarda el token
           if (response.token) {
             localStorage.setItem('token', response.token);
