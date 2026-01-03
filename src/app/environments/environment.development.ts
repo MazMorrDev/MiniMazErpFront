@@ -1,3 +1,3 @@
 export enum EnvironmentDevelopment {
-        apiUrl = 'https://localhost:5100'
+        apiUrl = 'http://localhost:5100'
 }

@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { LoginRequest } from '../interfaces/login-request';
 import { Router } from '@angular/router';
 import { ApiTokenResponse } from '../interfaces/token-response';
-import { Environment } from '../environments/environment';
+import { EnvironmentDevelopment } from '../environments/environment.development';
 
 
 @Injectable({
@@ -12,10 +12,10 @@ import { Environment } from '../environments/environment';
 export class LoginService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly apiUrl = Environment.apiUrl;
+  private readonly apiUrl = EnvironmentDevelopment.apiUrl;
 
   login(loginRequest: LoginRequest) {
-    const url = `${this.apiUrl}/user/login`;
+    const url = `${this.apiUrl}/api/Client/login`;
     return this.http.post<ApiTokenResponse>(url, loginRequest);
   }
 

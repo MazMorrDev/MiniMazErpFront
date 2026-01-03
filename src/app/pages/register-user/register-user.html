@@ -15,14 +15,14 @@
           [(ngModel)]="name" 
           name="name"
           type="name" 
-          placeholder="Pepe Juaréz"
+          placeholder="Marco Antonio"
           required
-          #emailInput="ngModel">
+          #nameInput="ngModel">
         <mat-icon matSuffix>person</mat-icon>
         
-        @if (emailInput.invalid && emailInput.touched) {
+        @if (nameInput.invalid && nameInput.touched) {
           <mat-error>
-            Por favor ingresa un email válido
+            Por favor ingresa un nombre válido
           </mat-error>
         }
       </mat-form-field>
@@ -78,7 +78,7 @@
 
   <mat-card-actions>
     <div style="text-align: center; width: 100%; margin-top: 1rem;">
-      <a href="/login" mat-button color="accent">Volver Atrás</a>
+      <a href="/login" mat-button color="accent">Inciar Sesión</a>
     </div>
   </mat-card-actions>
 </mat-card>
