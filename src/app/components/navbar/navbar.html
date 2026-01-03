@@ -12,7 +12,7 @@
     <!-- Desktop Navigation -->
     <nav class="desktop-nav">
       <button mat-button
-              routerLink="/"
+              routerLink="/dashboard"
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               class="nav-button">
@@ -21,7 +21,7 @@
       </button>
       
       <button mat-button
-              routerLink="/mov-inv"
+              routerLink="/movements"
               routerLinkActive="active"
               class="nav-button">
         <mat-icon>swap_horiz</mat-icon>
@@ -29,20 +29,13 @@
       </button>
       
       <button mat-button
-              routerLink="/products"
+              routerLink="/inventory"
               routerLinkActive="active"
               class="nav-button">
         <mat-icon>inventory_2</mat-icon>
-        <span>Products</span>
+        <span>Inventory</span>
       </button>
       
-      <button mat-button
-              routerLink="/reports"
-              routerLinkActive="active"
-              class="nav-button">
-        <mat-icon>assessment</mat-icon>
-        <span>Reports</span>
-      </button>
     </nav>
 
     <!-- Mobile Menu Toggle -->
@@ -83,15 +76,6 @@
               (click)="toggleMenu()">
         <mat-icon>inventory_2</mat-icon>
         <span>Products</span>
-      </button>
-      
-      <button mat-button
-              routerLink="/reports"
-              routerLinkActive="active"
-              class="mobile-nav-button"
-              (click)="toggleMenu()">
-        <mat-icon>assessment</mat-icon>
-        <span>Reports</span>
       </button>
     </nav>
   }

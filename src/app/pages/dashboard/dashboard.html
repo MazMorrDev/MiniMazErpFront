@@ -1,0 +1,287 @@
+<app-navbar />
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <button mat-raised-button color="primary" (click)="refresh()" [disabled]="isLoading()">
+            <mat-icon>refresh</mat-icon> Refresh
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+    <div class="loading-container">
+        <mat-spinner diameter="60"></mat-spinner>
+        <p>Loading dashboard data...</p>
+    </div>
+    } @else {
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <!-- Total Products -->
+        <mat-card class="stats-card">
+            <mat-card-content>
+                <div class="stats-content">
+                    <div class="stats-icon" style="background: #e3f2fd;">
+                        <mat-icon style="color: #1976d2;">inventory_2</mat-icon>
+                    </div>
+                    <div class="stats-text">
+                        <h3>{{ totalProducts() }}</h3>
+                        <p>Total Products</p>
+                    </div>
+                </div>
+                <mat-divider></mat-divider>
+                <p class="stats-footer">Total stock: {{ stockSummary().totalStock }} units</p>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Total Movements -->
+        <mat-card class="stats-card">
+            <mat-card-content>
+                <div class="stats-content">
+                    <div class="stats-icon" style="background: #f3e5f5;">
+                        <mat-icon style="color: #7b1fa2;">compare_arrows</mat-icon>
+                    </div>
+                    <div class="stats-text">
+                        <h3>{{ totalMovements() }}</h3>
+                        <p>Total Movements</p>
+                    </div>
+                </div>
+                <mat-divider></mat-divider>
+                <div class="stats-footer">
+                    <span style="color: #2e7d32;">{{ movementStats().ins }} IN</span> |
+                    <span style="color: #c62828;">{{ movementStats().outs }} OUT</span>
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Stock Summary -->
+        <mat-card class="stats-card">
+            <mat-card-content>
+                <div class="stats-content">
+                    <div class="stats-icon" style="background: #e8f5e9;">
+                        <mat-icon style="color: #388e3c;">assessment</mat-icon>
+                    </div>
+                    <div class="stats-text">
+                        <h3>{{ stockSummary().avgStock }}</h3>
+                        <p>Avg Stock per Product</p>
+                    </div>
+                </div>
+                <mat-divider></mat-divider>
+                <p class="stats-footer">{{ stockSummary().lowStockItems }} low stock items</p>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Recent Activity -->
+        <mat-card class="stats-card">
+            <mat-card-content>
+                <div class="stats-content">
+                    <div class="stats-icon" style="background: #fff3e0;">
+                        <mat-icon style="color: #f57c00;">history</mat-icon>
+                    </div>
+                    <div class="stats-text">
+                        <h3>{{ movementStats().weeklyCount }}</h3>
+                        <p>Movements (7 days)</p>
+                    </div>
+                </div>
+                <mat-divider></mat-divider>
+                <p class="stats-footer">{{ movementStats().monthlyCount }} movements this month</p>
+            </mat-card-content>
+        </mat-card>
+    </div>
+
+    <!-- Charts and Tables Grid -->
+    <div class="main-grid">
+        <!-- Recent Movements -->
+        <mat-card class="main-card">
+            <mat-card-header>
+                <mat-card-title>
+                    <mat-icon>history</mat-icon> Recent Movements
+                </mat-card-title>
+                <mat-card-subtitle>Last 5 movements across all products</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                @if (recentMovements().length > 0) {
+                <div class="movements-list">
+                    @for (movement of recentMovements(); track movement.id) {
+                    <div class="movement-item">
+                        <div class="movement-info">
+                            <span class="product-name">{{ movement.productName }}</span>
+                            <span class="movement-date">{{ movement.date | date:'MMM d, HH:mm' }}</span>
+                        </div>
+                        <div class="movement-details">
+                            <mat-chip [class]="movement.type === 'IN' ? 'chip-in' : 'chip-out'">
+                                {{ movement.type }}
+                            </mat-chip>
+                            <span class="quantity">{{ movement.quantity }} units</span>
+                        </div>
+                    </div>
+                    @if (!$last) {
+                    <mat-divider></mat-divider>
+                    }
+                    }
+                </div>
+                } @else {
+                <div class="no-data">
+                    <mat-icon>inventory_2</mat-icon>
+                    <p>No recent movements found</p>
+                </div>
+                }
+            </mat-card-content>
+            <mat-card-actions>
+                <button mat-button color="primary" routerLink="/movements">
+                    <mat-icon>list</mat-icon> View All Movements
+                </button>
+            </mat-card-actions>
+        </mat-card>
+
+        <!-- Stock Overview -->
+        <mat-card class="main-card">
+            <mat-card-header>
+                <mat-card-title>
+                    <mat-icon>store</mat-icon> Stock Overview
+                </mat-card-title>
+                <mat-card-subtitle>Current stock status by product</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <div class="table-container">
+                    <table mat-table [dataSource]="products()" class="stock-table">
+                        <!-- Product Name Column -->
+                        <ng-container matColumnDef="productName">
+                            <th mat-header-cell *matHeaderCellDef>Product</th>
+                            <td mat-cell *matCellDef="let product">
+                                <div class="product-cell">
+                                    <mat-icon>inventory_2</mat-icon>
+                                    <span>{{ product.name }}</span>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <!-- Last Movement Column -->
+                        <ng-container matColumnDef="lastMovement">
+                            <th mat-header-cell *matHeaderCellDef>Last Movement</th>
+                            <td mat-cell *matCellDef="let product">
+                                {{ getProductLastMovement(product.id) }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Stock Column -->
+                        <ng-container matColumnDef="stock">
+                            <th mat-header-cell *matHeaderCellDef>Current Stock</th>
+                            <td mat-cell *matCellDef="let product">
+                                @let stock = getProductStock(product.id);
+                                <mat-chip [color]="getStockColor(stock)" >
+                                    {{ stock }}
+                                </mat-chip>
+                            </td>
+                        </ng-container>
+
+                        <!-- Status Column -->
+                        <ng-container matColumnDef="status">
+                            <th mat-header-cell *matHeaderCellDef>Status</th>
+                            <td mat-cell *matCellDef="let product">
+                                @let stock = getProductStock(product.id);
+                                @let status = getProductStatus(stock);
+                                <mat-chip [color]="getStatusColor(status)">
+                                    {{ status }}
+                                </mat-chip>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                    </table>
+                </div>
+
+                @if (products().length === 0) {
+                <div class="no-data">
+                    <mat-icon>inventory_2</mat-icon>
+                    <p>No products found</p>
+                </div>
+                }
+            </mat-card-content>
+            <mat-card-actions>
+                <button mat-button color="primary" routerLink="/inventory">
+                    <mat-icon>view_list</mat-icon> Manage Inventory
+                </button>
+            </mat-card-actions>
+        </mat-card>
+
+        <!-- Quick Actions -->
+        <mat-card class="main-card quick-actions">
+            <mat-card-header>
+                <mat-card-title>
+                    <mat-icon>flash_on</mat-icon> Quick Actions
+                </mat-card-title>
+                <mat-card-subtitle>Frequently used actions</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <div class="actions-grid">
+                    <button mat-raised-button color="primary" class="action-button" routerLink="/movements">
+                        <mat-icon>add_circle</mat-icon>
+                        <span>New Movement</span>
+                    </button>
+
+                    <button mat-raised-button color="accent" class="action-button" routerLink="/inventory">
+                        <mat-icon>add</mat-icon>
+                        <span>Add Product</span>
+                    </button>
+
+                    <button mat-raised-button color="warn" class="action-button" (click)="refresh()">
+                        <mat-icon>refresh</mat-icon>
+                        <span>Refresh Data</span>
+                    </button>
+
+                    <button mat-raised-button class="action-button" routerLink="/movements">
+                        <mat-icon>list_alt</mat-icon>
+                        <span>View Reports</span>
+                    </button>
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Movement Statistics -->
+        <mat-card class="main-card">
+            <mat-card-header>
+                <mat-card-title>
+                    <mat-icon>bar_chart</mat-icon> Movement Statistics
+                </mat-card-title>
+                <mat-card-subtitle>IN vs OUT distribution</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <div class="stats-chart">
+                    <div class="chart-container">
+                        <div class="chart-bar">
+                            <div class="bar-label">IN ({{ movementStats().ins }})</div>
+                            <div class="bar-track">
+                                <div class="bar-fill in-fill" [style.width.%]="movementStats().insPercentage"></div>
+                            </div>
+                            <div class="bar-value">{{ movementStats().insPercentage }}%</div>
+                        </div>
+
+                        <div class="chart-bar">
+                            <div class="bar-label">OUT ({{ movementStats().outs }})</div>
+                            <div class="bar-track">
+                                <div class="bar-fill out-fill" [style.width.%]="100 - movementStats().insPercentage">
+                                </div>
+                            </div>
+                            <div class="bar-value">{{ 100 - movementStats().insPercentage }}%</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color in-color"></div>
+                            <span>IN Movements</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color out-color"></div>
+                            <span>OUT Movements</span>
+                        </div>
+                    </div>
+                </div>
+            </mat-card-content>
+        </mat-card>
+    </div>
+    }
+</div>

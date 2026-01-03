@@ -20,9 +20,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   ]
 })
 export class NavbarComponent {
-  // Puedes agregar lógica aquí si es necesario
+  // Variables para controlar el estado del menú
   isMenuOpen = false;
-  
+
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
   }

@@ -1,1 +1,26 @@
-<p>inventory works!</p>
+<app-navbar />
+
+<div class="container">
+  <!-- Toolbar -->
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <div class="toolbar-grid">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search by name</mat-label>
+          <input matInput [(ngModel)]="searchQuery" type="text">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Botón Add Product con tamaño fijo y alineado a la derecha -->
+        <div class="add-product-wrapper">
+          <button mat-raised-button color="primary" class="add-btn">
+            <mat-icon>add</mat-icon> Add Product
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Aquí irá el componente de tabla independiente -->
+</div>
