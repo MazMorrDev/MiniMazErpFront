@@ -1,5 +1,5 @@
 import { ExpenseType } from "../enums/expense-type";
-import { Movement } from "./movement";
+import { Movement } from "../../login/Dtos/movement";
 
 export interface Expense extends Movement{
     expenseType: ExpenseType;

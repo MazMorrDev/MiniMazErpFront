@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { RegisterRequest } from '../interfaces/register-request';
-import { ApiTokenResponse } from '../interfaces/token-response';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { RegisterRequest } from './register-request';
+import { ApiTokenResponse } from '../../interfaces/token-response';
+import { EnvironmentDevelopment } from '../../environments/environment-development';
 
 @Injectable({
   providedIn: 'root',

@@ -10,10 +10,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
-import { ProductService } from '../../services/product.service';
+import { ProductService } from '../inventory/product.service';
 import { MovementService } from '../../services/movement.service';
-import { Movement } from '../../interfaces/movement';
-import { Inventory } from '../../interfaces/inventory';
+import { Movement } from '../login/Dtos/movement';
+import { Inventory } from '../inventory/Dtos/inventory';
+import { InventoryService } from '../inventory/inventory.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -38,7 +39,7 @@ import { Inventory } from '../../interfaces/inventory';
 export class Dashboard {
   private productService = inject(ProductService);
   private movementService = inject(MovementService);
-  private inventoryService = inject(InventoryServ)
+  private inventoryService = inject(InventoryService)
 
   // Signals for data
   products = signal<Inventory[]>([]);

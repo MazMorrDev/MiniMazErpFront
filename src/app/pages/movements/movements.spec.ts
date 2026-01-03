@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Movements } from './movements';
+import { Movements } from './Dtos/movements';
 
 describe('Movements', () => {
   let component: Movements;

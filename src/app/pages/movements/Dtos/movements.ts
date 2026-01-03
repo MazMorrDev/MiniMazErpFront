@@ -13,12 +13,12 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProductService } from '../../services/product.service';
+import { ProductService } from '../../inventory/product.service';
 import { MovementService } from '../../services/movement.service';
 import { Product } from '../../interfaces/product';
-import { Movement } from '../../interfaces/movement';
+import { Movement } from '../../login/Dtos/movement';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from "../../components/navbar/navbar";
+import { NavbarComponent } from "../../../components/navbar/navbar";
 
 @Component({
   standalone: true,

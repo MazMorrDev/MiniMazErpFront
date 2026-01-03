@@ -5,51 +5,46 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { LoginService } from '../../services/login.service';
-import { LoginRequest } from '../../interfaces/login-request';
+import { RegisterService } from './register.service';
 import { Router } from '@angular/router';
+import { RegisterRequest } from './register-request';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register-user',
   imports: [
-    FormsModule,
     MatInputModule,
-    MatButtonModule,
+    MatIconModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatIconModule],
-  templateUrl: './login.html',
-  styleUrl: './login.scss',
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule
+  ],
+  templateUrl: './register-user.html',
+  styleUrl: './register-user.scss',
 })
-export class Login {
+export class RegisterUser {
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;
 
+  private readonly registerService = inject(RegisterService);
   private readonly router = inject(Router);
-  private readonly loginService = inject(LoginService);
 
   onSubmit(): void {
     if (this.name && this.password) {
-      const loginData: LoginRequest = {
+      const registerData: RegisterRequest = {
         name: this.name,
         password: this.password
       }
 
-      this.loginService.login(loginData).subscribe({
-        next: (response) => {
-
-          // Guarda el token
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-          }
-          // Redirige al dashboard/home
-          this.router.navigate(['/dashboard']);
+      this.registerService.register(registerData).subscribe({
+        next: () => {
+          this.router.navigate(['/login']);
         },
         error: (error) => {
-          console.error("Error en login", error);
+          console.error("Error al registrar el usuario", error);
         }
-      });
+      })
     }
   }
 }

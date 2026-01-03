@@ -5,46 +5,51 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { RegisterService } from '../../services/register.service';
+import { LoginService } from '../login.service';
+import { LoginRequest } from './login-request';
 import { Router } from '@angular/router';
-import { RegisterRequest } from '../../interfaces/register-request';
 
 @Component({
-  selector: 'app-register-user',
+  selector: 'app-login',
   imports: [
-    MatInputModule,
-    MatIconModule,
-    MatCardModule,
     FormsModule,
+    MatInputModule,
     MatButtonModule,
-    MatFormFieldModule
-  ],
-  templateUrl: './register-user.html',
-  styleUrl: './register-user.scss',
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule],
+  templateUrl: './login.html',
+  styleUrl: './login.scss',
 })
-export class RegisterUser {
+export class Login {
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;
 
-  private readonly registerService = inject(RegisterService);
   private readonly router = inject(Router);
+  private readonly loginService = inject(LoginService);
 
   onSubmit(): void {
     if (this.name && this.password) {
-      const registerData: RegisterRequest = {
+      const loginData: LoginRequest = {
         name: this.name,
         password: this.password
       }
 
-      this.registerService.register(registerData).subscribe({
-        next: () => {
-          this.router.navigate(['/login']);
+      this.loginService.login(loginData).subscribe({
+        next: (response) => {
+
+          // Guarda el token
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+          }
+          // Redirige al dashboard/home
+          this.router.navigate(['/dashboard']);
         },
         error: (error) => {
-          console.error("Error al registrar el usuario", error);
+          console.error("Error en login", error);
         }
-      })
+      });
     }
   }
 }
