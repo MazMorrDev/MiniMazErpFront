@@ -1,37 +1,69 @@
+<!-- main.html -->
 <app-navbar />
 
 <div class="container">
-  <div class="page-header">
-    <h1>Product Inventory</h1>
-    <p>Manage stock levels, pricing, and locations across all warehouses.</p>
-  </div>
+  <!-- Header -->
+  <mat-card class="header-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1 class="page-title">Product Inventory</h1>
+      </mat-card-title>
+      <mat-card-subtitle>
+        Manage stock levels, pricing, and locations across all warehouses.
+      </mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
 
-  <div class="toolbar">
-    <div class="toolbar-left">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Search by name, ID, or SKU...">
+  <!-- Toolbar -->
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <div class="toolbar-grid">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search by name, ID, or SKU...</mat-label>
+          <input matInput [(ngModel)]="searchQuery" type="text">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Warehouse Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Warehouse</mat-label>
+          <mat-select [(ngModel)]="selectedWarehouse">
+            <mat-option value="all">All Warehouses</mat-option>
+            <mat-option value="north">North Warehouse</mat-option>
+            <mat-option value="south">South Warehouse</mat-option>
+            <mat-option value="east">East Warehouse</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Category Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select [(ngModel)]="selectedCategory">
+            <mat-option value="all">All Categories</mat-option>
+            <mat-option value="electronics">Electronics</mat-option>
+            <mat-option value="clothing">Clothing</mat-option>
+            <mat-option value="food">Food</mat-option>
+            <mat-option value="tools">Tools</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Low Stock Toggle -->
+        <mat-checkbox [(ngModel)]="lowStockOnly" color="warn" class="low-stock-toggle">
+          <mat-icon>warning</mat-icon> Low Stock Only
+        </mat-checkbox>
       </div>
-      <button class="filter-btn">Filters</button>
-      <select class="dropdown">
-        <option>Warehouse: All</option>
-      </select>
-      <select class="dropdown">
-        <option>Category: All</option>
-      </select>
-      <label class="low-stock-toggle">
-        <input type="checkbox">
-        <span>⚠️ Low Stock Only</span>
-      </label>
-    </div>
-    <div class="toolbar-right">
-      <button class="btn-export">
-        <span>📥</span> Export CSV
-      </button>
-      <button class="btn-add">
-        <span>+</span> Add Product
-      </button>
-    </div>
-  </div>
 
-  <!-- mover table a componente independiente -->
+      <div class="toolbar-actions">
+        <button mat-stroked-button color="primary" class="export-btn">
+          <mat-icon>download</mat-icon> Export CSV
+        </button>
+        <button mat-raised-button color="primary" class="add-btn">
+          <mat-icon>add</mat-icon> Add Product
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Aquí irá el componente de tabla independiente -->
+</div>

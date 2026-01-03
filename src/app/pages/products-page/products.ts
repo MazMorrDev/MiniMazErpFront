@@ -1,16 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { InventoryGridComponent } from "../../components/inventory-grid/inventory-grid";
+import { Component } from '@angular/core';
+import { ProductsListComponent } from './products-list';
 
 @Component({
+  standalone: true,
   selector: 'app-products',
   template: `
-    <app-inventory_grid />
+    <app-products-list></app-products-list>
   `,
   styles: [``],
-  imports: [InventoryGridComponent]
+  imports: [ProductsListComponent]
 })
-export class ProductsPageComponent implements OnInit {
-  constructor() { }
-
-  ngOnInit(): void { }
-}
+export class ProductsPageComponent {}
