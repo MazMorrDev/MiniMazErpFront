@@ -8,21 +8,31 @@ export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
 
-  // Si NO estamos en el navegador (estamos en servidor durante SSR)
-  // Devolver true TEMPORALMENTE para que la prerenderización continúe
+  // Estrategia para SSR: Permitir carga inicial
   if (!isPlatformBrowser(platformId)) {
-    console.log('SSR/Prerender: authGuard skipping localStorage check');
-    return true; // Permitir la carga inicial
+    console.log('SSR: Permitiendo carga inicial (sin verificación de token)');
+    return true; // Permitir que SSR/prerender continúe
   }
 
-  // Solo en el navegador hacemos la verificación real
+  // En el cliente (navegador), hacer verificación real
   if (loginService.isUserLoggedIn()) {
     return true;
   }
 
-  // Redirige al login guardando la URL original
+  // Si no hay token, verificar si hay en localStorage (fallback)
+  const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+
+  console.log('Usuario no autenticado, redirigiendo a login');
+
+  // Redirigir a login guardando la URL original
+  const returnUrl = state.url.split('?')[0];
   router.navigate(['/login'], {
-    queryParams: { returnUrl: state.url },
+    queryParams: {
+      returnUrl: returnUrl || '/dashboard',
+      reason: 'auth_required'
+    },
+    replaceUrl: true
   });
+
   return false;
 };

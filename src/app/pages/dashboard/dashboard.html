@@ -109,12 +109,12 @@
                             <span class="product-name">{{ movement.productName }}</span>
                             <span class="movement-date">{{ movement.date | date:'MMM d, HH:mm' }}</span>
                         </div>
-                        <div class="movement-details">
+                        <!--                        <div class="movement-details">
                             <mat-chip [class]="movement.type === 'IN' ? 'chip-in' : 'chip-out'">
                                 {{ movement.type }}
                             </mat-chip>
                             <span class="quantity">{{ movement.quantity }} units</span>
-                        </div>
+                        </div> -->
                     </div>
                     @if (!$last) {
                     <mat-divider></mat-divider>

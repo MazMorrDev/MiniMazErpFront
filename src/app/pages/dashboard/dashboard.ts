@@ -12,8 +12,8 @@ import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../../services/product.service';
 import { MovementService } from '../../services/movement.service';
-import { Product } from '../../interfaces/product';
 import { Movement } from '../../interfaces/movement';
+import { Inventory } from '../../interfaces/inventory';
 
 @Component({
   selector: 'app-dashboard',
@@ -40,7 +40,7 @@ export class Dashboard {
   private movementService = inject(MovementService);
 
   // Signals for data
-  products = signal<Product[]>([]);
+  products = signal<Inventory[]>([]);
   movements = signal<Movement[]>([]);
   isLoading = signal(true);
 
@@ -66,6 +66,7 @@ export class Dashboard {
       const productMovements = movements.filter(m => m.productId === product.id);
       let currentStock = 0;
       
+      /*
       productMovements.forEach(movement => {
         if (movement.type === 'IN') {
           currentStock += movement.quantity;
@@ -73,7 +74,8 @@ export class Dashboard {
           currentStock -= movement.quantity;
         }
       });
-      
+      */
+
       totalStock += currentStock;
       if (currentStock < 10) { // Consider low stock if less than 10
         lowStockItems++;

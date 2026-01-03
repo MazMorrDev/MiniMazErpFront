@@ -1,8 +1,8 @@
 export interface Movement {
   id: number;
   productId?: number;
-  productName: string;
+  inventoryId?: number;
+  description: string;
   quantity: number;
-  date: string; // ISO
-  notes?: string;
+  movementDate: string; // ISO
 }
