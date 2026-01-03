@@ -38,6 +38,7 @@ import { Inventory } from '../../interfaces/inventory';
 export class Dashboard {
   private productService = inject(ProductService);
   private movementService = inject(MovementService);
+  private inventoryService = inject(InventoryServ)
 
   // Signals for data
   products = signal<Inventory[]>([]);
@@ -51,7 +52,7 @@ export class Dashboard {
   
   recentMovements = computed(() => 
     this.movements()
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime())
       .slice(0, 5)
   );
 
@@ -95,8 +96,8 @@ export class Dashboard {
     const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     
-    const recentMovements = movements.filter(m => new Date(m.date) >= lastWeek);
-    const monthlyMovements = movements.filter(m => new Date(m.date) >= lastMonth);
+    const recentMovements = movements.filter(m => new Date(m.movementDate) >= lastWeek);
+    const monthlyMovements = movements.filter(m => new Date(m.movementDate) >= lastMonth);
     
     const ins = movements.filter(m => m.type === 'IN').length;
     const outs = movements.filter(m => m.type === 'OUT').length;

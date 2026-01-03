@@ -106,8 +106,8 @@
                     @for (movement of recentMovements(); track movement.id) {
                     <div class="movement-item">
                         <div class="movement-info">
-                            <span class="product-name">{{ movement.productName }}</span>
-                            <span class="movement-date">{{ movement.date | date:'MMM d, HH:mm' }}</span>
+                            <span class="product-name">{{ movement.description }}</span>
+                            <span class="movement-date">{{ movement.movementDate | date:'MMM d, HH:mm' }}</span>
                         </div>
                         <!--                        <div class="movement-details">
                             <mat-chip [class]="movement.type === 'IN' ? 'chip-in' : 'chip-out'">
