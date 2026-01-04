@@ -3,6 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Product } from '../interfaces/product.dto';
 import { EnvironmentDevelopment } from '../../../environments/environment-development';
+import { CreateProductDto } from '../interfaces/create-product.dto';
+import { UpdateProductDto } from '../interfaces/update-product.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +13,7 @@ export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = EnvironmentDevelopment.apiUrl;
 
-  list(): Observable<Product[]> {
+  getAll(): Observable<Product[]> {
     const url = `${this.apiUrl}/api/Product/`;
     return this.http.get<Product[]>(url);
   }
@@ -21,14 +23,14 @@ export class ProductService {
     return this.http.get<Product>(url);
   }
 
-  create(product: Product): Observable<Product> {
+  create(product: CreateProductDto): Observable<Product> {
     const url = `${this.apiUrl}/api/Product`;
     return this.http.post<Product>(url, product);
   }
 
-  update(id: number, product: Product): Observable<Product> {
+  update(id: number, product: UpdateProductDto): Observable<void> {
     const url = `${this.apiUrl}/api/Product/${id}`;
-    return this.http.put<Product>(url, product);
+    return this.http.put<void>(url, product);
   }
 
   delete(id: number): Observable<void> {

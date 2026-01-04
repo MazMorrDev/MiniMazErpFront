@@ -3,6 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { EnvironmentDevelopment } from '../../../environments/environment-development';
 import { Inventory } from '../interfaces/inventory.dto';
+import { CreateInventoryDto } from '../interfaces/create-inventory.dto';
+import { UpdateInventoryDto } from '../interfaces/update-inventory.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -33,11 +35,3 @@ export class InventoryService {
   }
 }
 
-// Interfaces para los DTOs
-export interface CreateInventoryDto {
-
-}
-
-export interface UpdateInventoryDto {
-
-}
