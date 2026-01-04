@@ -11,7 +11,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../inventory/product.service';
-import { MovementService } from '../../services/movement.service';
+import { MovementService } from '../movements/movement.service';
 import { Movement } from '../movements/Dtos/movement';
 import { Inventory } from '../inventory/Dtos/inventory';
 import { InventoryService } from '../inventory/inventory.service';
