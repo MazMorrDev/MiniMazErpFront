@@ -28,6 +28,7 @@ import { CreateBuyDto } from './interfaces/create-buy.dto';
 import { CreateSellDto } from './interfaces/create-sell.dto';
 import { CreateExpenseDto } from './interfaces/create-expense.dto';
 import { FormsModule } from '@angular/forms';
+import { NavbarComponent } from "../../components/navbar/navbar";
 
 // Tipo unión para todos los movimientos posibles
 type MovementUnion = Buy | Sell | Expense;
@@ -54,8 +55,9 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
     MatTooltipModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    MatRadioModule
-  ],
+    MatRadioModule,
+    NavbarComponent
+],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './movements.html',
   styleUrl: './movements.scss'
