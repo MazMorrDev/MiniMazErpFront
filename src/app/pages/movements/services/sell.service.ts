@@ -1,11 +1,61 @@
 import { inject, Injectable } from '@angular/core';
-import { EnvironmentDevelopment } from '../../../environments/environment-development';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { EnvironmentDevelopment } from '../../../environments/environment-development';
+import { Sell } from '../interfaces/sell';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SellService {
-  private readonly apiUrl = EnvironmentDevelopment.apiUrl;
   private readonly http = inject(HttpClient);
+  private readonly apiUrl = EnvironmentDevelopment.apiUrl;
+
+  // CRUD básico - compatibles con tu controller
+  getAll(): Observable<Sell[]> {
+    return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell`);
+  }
+
+  getById(id: number): Observable<Sell> {
+    return this.http.get<Sell>(`${this.apiUrl}/api/Sell/${id}`);
+  }
+
+  create(sellDto: CreateSellDto): Observable<Sell> {
+    return this.http.post<Sell>(`${this.apiUrl}/api/Sell`, sellDto);
+  }
+
+  update(id: number, sellDto: UpdateSellDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/api/Sell/${id}`, sellDto);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/api/Sell/${id}`);
+  }
+
+  // Endpoints adicionales de tu controller
+  getByProductId(productId: number): Observable<Sell[]> {
+    return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell/product/${productId}`);
+  }
+
+  getByDateRange(startDate: string, endDate: string): Observable<Sell[]> {
+    return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell/date-range`, {
+      params: { 
+        startDate, 
+        endDate 
+      }
+    });
+  }
+
+  getFullById(id: number): Observable<Sell> {
+    return this.http.get<Sell>(`${this.apiUrl}/api/Sell/${id}/full`);
+  }
+}
+
+// Interfaces para los DTOs que usa tu controller
+export interface CreateSellDto {
+
+}
+
+export interface UpdateSellDto {
+
 }
