@@ -11,14 +11,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProductService } from '../../inventory/product.service';
-import { MovementService } from '../../services/movement.service';
-import { Product } from '../../interfaces/product';
-import { Movement } from '../../login/Dtos/movement';
+import { ProductService } from '../inventory/product.service';
+import { MovementService } from './movement.service';
+import { Product } from '../inventory/Dtos/product';
+import { Movement } from './Dtos/movement';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from "../../../components/navbar/navbar";
+import { NavbarComponent } from "../../components/navbar/navbar";
 
 @Component({
   standalone: true,

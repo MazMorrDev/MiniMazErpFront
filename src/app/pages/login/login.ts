@@ -5,8 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { LoginService } from '../login.service';
-import { LoginRequest } from './login-request';
+import { LoginService } from './login.service';
+import { LoginRequest } from './Dtos/login-request';
 import { Router } from '@angular/router';
 
 @Component({

@@ -4,7 +4,7 @@ import { authGuard } from './guards/auth-guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./pages/login/Dtos/login').then((m) => m.Login),
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
     path: 'register',
@@ -12,7 +12,7 @@ export const routes: Routes = [
   },
   {
     path: 'movements',
-    loadComponent: () => import('./pages/movements/Dtos/movements').then((m) => m.Movements)
+    loadComponent: () => import('./pages/movements/movements').then((m) => m.Movements)
   },
   {
     path: 'inventory',

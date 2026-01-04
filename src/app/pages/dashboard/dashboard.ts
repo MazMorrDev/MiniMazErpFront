@@ -12,7 +12,7 @@ import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../inventory/product.service';
 import { MovementService } from '../../services/movement.service';
-import { Movement } from '../login/Dtos/movement';
+import { Movement } from '../movements/Dtos/movement';
 import { Inventory } from '../inventory/Dtos/inventory';
 import { InventoryService } from '../inventory/inventory.service';
 
