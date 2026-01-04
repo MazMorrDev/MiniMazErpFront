@@ -11,10 +11,26 @@ import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../inventory/services/product.service';
-import { MovementService } from '../movements/services/movement.service';
-import { Movement } from '../movements/interfaces/movement.dto';
-import { Inventory } from '../inventory/interfaces/inventory.dto';
+import { BuyService } from '../movements/services/buy.service';
+import { SellService } from '../movements/services/sell.service';
+import { ExpenseService } from '../movements/services/expense.service';
 import { InventoryService } from '../inventory/services/inventory.service';
+import { Product } from '../inventory/interfaces/product.dto';
+import { Buy } from '../movements/interfaces/buy.dto';
+import { Sell } from '../movements/interfaces/sell.dto';
+import { Expense } from '../movements/interfaces/expense.dto';
+import { Inventory } from '../inventory/interfaces/inventory.dto';
+import { forkJoin } from 'rxjs';
+
+// Interfaz unificada para movimientos en el dashboard
+interface DashboardMovement {
+  id: number;
+  productId: number;
+  description: string;
+  quantity: number;
+  movementDate: string;
+  type: 'IN' | 'OUT' | 'EXPENSE';
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -31,63 +47,55 @@ import { InventoryService } from '../inventory/services/inventory.service';
     MatTableModule,
     MatChipsModule,
     MatDividerModule,
-    MatChipsModule
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
 export class Dashboard {
   private productService = inject(ProductService);
-  private movementService = inject(MovementService);
-  private inventoryService = inject(InventoryService)
+  private buyService = inject(BuyService);
+  private sellService = inject(SellService);
+  private expenseService = inject(ExpenseService);
+  private inventoryService = inject(InventoryService);
 
   // Signals for data
-  products = signal<Inventory[]>([]);
-  movements = signal<Movement[]>([]);
+  products = signal<Product[]>([]);
+  inventories = signal<Inventory[]>([]);
+  movements = signal<DashboardMovement[]>([]);
   isLoading = signal(true);
 
   // Computed signals for dashboard metrics
   totalProducts = computed(() => this.products().length);
-  
+
   totalMovements = computed(() => this.movements().length);
-  
-  recentMovements = computed(() => 
+
+  recentMovements = computed(() =>
     this.movements()
       .sort((a, b) => new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime())
       .slice(0, 5)
   );
 
   stockSummary = computed(() => {
-    const products = this.products();
-    const movements = this.movements();
-    
+    const inventories = this.inventories();
+
     let totalStock = 0;
     let lowStockItems = 0;
-    
-    products.forEach(product => {
-      const productMovements = movements.filter(m => m.productId === product.id);
-      let currentStock = 0;
-      
-      /*
-      productMovements.forEach(movement => {
-        if (movement.type === 'IN') {
-          currentStock += movement.quantity;
-        } else if (movement.type === 'OUT') {
-          currentStock -= movement.quantity;
-        }
-      });
-      */
 
-      totalStock += currentStock;
-      if (currentStock < 10) { // Consider low stock if less than 10
+    inventories.forEach(inventory => {
+      const stock = inventory.stock;
+      totalStock += stock;
+
+      // Verificar si hay stock bajo basado en alertStock o un valor por defecto
+      const alertThreshold = inventory.alertStock || 10;
+      if (stock <= alertThreshold) {
         lowStockItems++;
       }
     });
-    
+
     return {
       totalStock,
       lowStockItems,
-      avgStock: products.length > 0 ? Math.round(totalStock / products.length) : 0
+      avgStock: inventories.length > 0 ? Math.round(totalStock / inventories.length) : 0
     };
   });
 
@@ -96,15 +104,15 @@ export class Dashboard {
     const today = new Date();
     const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const recentMovements = movements.filter(m => new Date(m.movementDate) >= lastWeek);
+
+    const weeklyMovements = movements.filter(m => new Date(m.movementDate) >= lastWeek);
     const monthlyMovements = movements.filter(m => new Date(m.movementDate) >= lastMonth);
-    
+
     const ins = movements.filter(m => m.type === 'IN').length;
     const outs = movements.filter(m => m.type === 'OUT').length;
-    
+
     return {
-      weeklyCount: recentMovements.length,
+      weeklyCount: weeklyMovements.length,
       monthlyCount: monthlyMovements.length,
       ins,
       outs,
@@ -112,7 +120,7 @@ export class Dashboard {
     };
   });
 
-  displayedColumns = ['productName', 'lastMovement', 'stock', 'status'];
+  displayedColumns = ['productName', 'stock', 'status'];
 
   constructor() {
     this.loadData();
@@ -120,70 +128,104 @@ export class Dashboard {
 
   loadData() {
     this.isLoading.set(true);
-    
-    this.productService.list().subscribe({
-      next: (products) => {
-        this.products.set(products);
-        this.loadMovements();
-      },
-      error: () => {
-        this.products.set([]);
-        this.isLoading.set(false);
-      }
-    });
-  }
 
-  loadMovements() {
-    this.movementService.list().subscribe({
-      next: (movements) => {
-        this.movements.set(movements);
+    // Cargar productos, inventarios y movimientos en paralelo
+    forkJoin({
+      products: this.productService.getAll(),
+      inventories: this.inventoryService.getAll(),
+      buys: this.buyService.getAll(),
+      sells: this.sellService.getAll(),
+      expenses: this.expenseService.getAll()
+    }).subscribe({
+      next: ({ products, inventories, buys, sells, expenses }) => {
+        this.products.set(products);
+        this.inventories.set(inventories);
+
+        // Convertir todos los movimientos a DashboardMovement
+        const allMovements: DashboardMovement[] = [
+          ...buys.map(buy => ({
+            id: buy.id,
+            productId: buy.productId,
+            description: buy.description || 'Compra',
+            quantity: buy.quantity,
+            movementDate: buy.movementDate,
+            type: 'IN' as const
+          })),
+          ...sells.map(sell => ({
+            id: sell.id,
+            productId: sell.productId,
+            description: sell.description || 'Venta',
+            quantity: sell.quantity,
+            movementDate: sell.movementDate,
+            type: 'OUT' as const
+          })),
+          ...expenses.map(expense => ({
+            id: expense.id,
+            productId: expense.productId,
+            description: expense.description || 'Gasto',
+            quantity: expense.quantity,
+            movementDate: expense.movementDate,
+            type: 'EXPENSE' as const
+          }))
+        ];
+
+        this.movements.set(allMovements);
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error cargando datos del dashboard:', error);
+        this.products.set([]);
+        this.inventories.set([]);
         this.movements.set([]);
         this.isLoading.set(false);
       }
     });
   }
 
-  getProductStock(productId: number): number {
-    const productMovements = this.movements().filter(m => m.productId === productId);
-    let stock = 0;
-    
-    productMovements.forEach(movement => {
-      if (movement.type === 'IN') {
-        stock += movement.quantity;
-      } else if (movement.type === 'OUT') {
-        stock -= movement.quantity;
-      }
-    });
-    
-    return Math.max(0, stock);
+  // Obtener el inventario de un producto específico
+  getProductInventory(productId: number): Inventory | undefined {
+    return this.inventories().find(inv => inv.productId === productId);
   }
 
-  getProductLastMovement(productId: number): string {
-    const productMovements = this.movements()
-      .filter(m => m.productId === productId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    return productMovements.length > 0 
-      ? new Date(productMovements[0].date).toLocaleDateString() 
-      : 'No movements';
+  // Obtener el stock de un producto
+  getProductStock(productId: number): number {
+    const inventory = this.getProductInventory(productId);
+    return inventory ? inventory.stock : 0;
+  }
+
+  // Obtener el nombre del producto
+  getProductName(productId: number): string {
+    const product = this.products().find(p => p.id === productId);
+    return product ? product.name : 'Producto no encontrado';
+  }
+
+  // Obtener inventarios con información del producto para la tabla
+  getInventoriesWithProductInfo() {
+    const products = this.products();
+    const inventories = this.inventories();
+
+    return inventories.map(inventory => {
+      const product = products.find(p => p.id === inventory.productId);
+      return {
+        ...inventory,
+        productName: product ? product.name : 'Producto no encontrado'
+      };
+    });
   }
 
   getProductStatus(stock: number): string {
-    if (stock === 0) return 'Out of Stock';
-    if (stock < 10) return 'Low Stock';
-    if (stock < 50) return 'Medium Stock';
-    return 'In Stock';
+    if (stock === 0) return 'Sin Stock';
+    if (stock < 10) return 'Stock Bajo';
+    if (stock < 50) return 'Stock Medio';
+    return 'Stock Alto';
   }
 
   getStatusColor(status: string): string {
-    switch(status) {
-      case 'Out of Stock': return 'warn';
-      case 'Low Stock': return 'accent';
-      case 'Medium Stock': return 'primary';
-      case 'In Stock': return 'primary';
+    switch (status) {
+      case 'Sin Stock': return 'warn';
+      case 'Stock Bajo': return 'accent';
+      case 'Stock Medio': return 'primary';
+      case 'Stock Alto': return 'primary';
       default: return '';
     }
   }
@@ -198,4 +240,3 @@ export class Dashboard {
     return 'primary';
   }
 }
-

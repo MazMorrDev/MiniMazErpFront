@@ -109,12 +109,13 @@
                             <span class="product-name">{{ movement.description }}</span>
                             <span class="movement-date">{{ movement.movementDate | date:'MMM d, HH:mm' }}</span>
                         </div>
-                        <!--                        <div class="movement-details">
-                            <mat-chip [class]="movement.type === 'IN' ? 'chip-in' : 'chip-out'">
+                        <div class="movement-details">
+                            <mat-chip
+                                [class]="movement.type === 'IN' ? 'chip-in' : (movement.type === 'OUT' ? 'chip-out' : 'chip-expense')">
                                 {{ movement.type }}
                             </mat-chip>
                             <span class="quantity">{{ movement.quantity }} units</span>
-                        </div> -->
+                        </div>
                     </div>
                     @if (!$last) {
                     <mat-divider></mat-divider>
@@ -145,33 +146,24 @@
             </mat-card-header>
             <mat-card-content>
                 <div class="table-container">
-                    <table mat-table [dataSource]="products()" class="stock-table">
+                    <table mat-table [dataSource]="getInventoriesWithProductInfo()" class="stock-table">
                         <!-- Product Name Column -->
                         <ng-container matColumnDef="productName">
                             <th mat-header-cell *matHeaderCellDef>Product</th>
-                            <td mat-cell *matCellDef="let product">
+                            <td mat-cell *matCellDef="let inventory">
                                 <div class="product-cell">
                                     <mat-icon>inventory_2</mat-icon>
-                                    <span>{{ product.name }}</span>
+                                    <span>{{ getProductName(inventory.productId) }}</span>
                                 </div>
-                            </td>
-                        </ng-container>
-
-                        <!-- Last Movement Column -->
-                        <ng-container matColumnDef="lastMovement">
-                            <th mat-header-cell *matHeaderCellDef>Last Movement</th>
-                            <td mat-cell *matCellDef="let product">
-                                {{ getProductLastMovement(product.id) }}
                             </td>
                         </ng-container>
 
                         <!-- Stock Column -->
                         <ng-container matColumnDef="stock">
                             <th mat-header-cell *matHeaderCellDef>Current Stock</th>
-                            <td mat-cell *matCellDef="let product">
-                                @let stock = getProductStock(product.id);
-                                <mat-chip [color]="getStockColor(stock)" >
-                                    {{ stock }}
+                            <td mat-cell *matCellDef="let inventory">
+                                <mat-chip [color]="getStockColor(inventory.stock)">
+                                    {{ inventory.stock }}
                                 </mat-chip>
                             </td>
                         </ng-container>
@@ -179,9 +171,8 @@
                         <!-- Status Column -->
                         <ng-container matColumnDef="status">
                             <th mat-header-cell *matHeaderCellDef>Status</th>
-                            <td mat-cell *matCellDef="let product">
-                                @let stock = getProductStock(product.id);
-                                @let status = getProductStatus(stock);
+                            <td mat-cell *matCellDef="let inventory">
+                                @let status = getProductStatus(inventory.stock);
                                 <mat-chip [color]="getStatusColor(status)">
                                     {{ status }}
                                 </mat-chip>
@@ -193,10 +184,10 @@
                     </table>
                 </div>
 
-                @if (products().length === 0) {
+                @if (getInventoriesWithProductInfo().length === 0) {
                 <div class="no-data">
                     <mat-icon>inventory_2</mat-icon>
-                    <p>No products found</p>
+                    <p>No inventory data found</p>
                 </div>
                 }
             </mat-card-content>
