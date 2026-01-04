@@ -24,8 +24,8 @@ import { FormsModule } from '@angular/forms';
     MatTooltipModule,
     FormsModule
   ],
-  templateUrl: './inventory.html',
-  styleUrl: './inventory.scss',
+  templateUrl: './inventory-pannel.html',
+  styleUrl: './inventory-pannel.scss',
 })
 export class Inventory {
   lowStockOnly: boolean = false;

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Register } from './register';
+import { BuyService } from '../components/movements-pannel/services/buy.service';
 
-describe('Register', () => {
-  let service: Register;
+describe('Buy', () => {
+  let service: BuyService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(Register);
+    service = TestBed.inject(BuyService);
   });
 
   it('should be created', () => {

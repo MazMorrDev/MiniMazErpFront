@@ -5,9 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { RegisterService } from './register.service';
+import { RegisterService } from '../../services/register.service';
 import { Router } from '@angular/router';
-import { RegisterRequest } from './register-request';
+import { RegisterRequest } from '../../interfaces/register/register-request';
 
 @Component({
   selector: 'app-register-user',

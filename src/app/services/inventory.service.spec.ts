@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Inventory } from '../inventory';
+import { Inventory } from '../pages/inventory-pannel/inventory-pannel';
 
 describe('Inventory', () => {
   let service: Inventory;

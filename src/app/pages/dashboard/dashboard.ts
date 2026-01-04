@@ -10,16 +10,16 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
-import { ProductService } from '../inventory/services/product.service';
-import { BuyService } from '../movements/services/buy.service';
-import { SellService } from '../movements/services/sell.service';
-import { ExpenseService } from '../movements/services/expense.service';
-import { InventoryService } from '../inventory/services/inventory.service';
-import { Product } from '../inventory/interfaces/product.dto';
-import { Buy } from '../movements/interfaces/buy.dto';
-import { Sell } from '../movements/interfaces/sell.dto';
-import { Expense } from '../movements/interfaces/expense.dto';
-import { Inventory } from '../inventory/interfaces/inventory.dto';
+import { ProductService } from '../../services/product.service';
+import { BuyService } from '../../services/buy.service';
+import { SellService } from '../../components/movements-pannel/services/sell.service';
+import { ExpenseService } from '../../components/movements-pannel/services/expense.service';
+import { InventoryService } from '../../services/inventory.service';
+import { Product } from '../../interfaces/inventory/product.dto';
+import { Buy } from '../../components/movements-pannel/interfaces/buy.dto';
+import { Sell } from '../../components/movements-pannel/interfaces/sell.dto';
+import { Expense } from '../../components/movements-pannel/interfaces/expense.dto';
+import { Inventory } from '../../interfaces/inventory/inventory.dto';
 import { forkJoin } from 'rxjs';
 
 // Interfaz unificada para movimientos en el dashboard
