@@ -1,4 +1,4 @@
-export interface Movement {
+export interface MovementDto {
   id: number;
   productId?: number;
   inventoryId?: number;

@@ -13,7 +13,6 @@ export class SellService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = EnvironmentDevelopment.apiUrl;
 
-  // CRUD básico - compatibles con tu controller
   getAll(): Observable<Sell[]> {
     return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell`);
   }
@@ -34,7 +33,6 @@ export class SellService {
     return this.http.delete<void>(`${this.apiUrl}/api/Sell/${id}`);
   }
 
-  // Endpoints adicionales de tu controller
   getByProductId(productId: number): Observable<Sell[]> {
     return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell/product/${productId}`);
   }
