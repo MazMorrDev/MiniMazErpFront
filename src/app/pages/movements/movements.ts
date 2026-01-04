@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,12 +15,11 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { ProductService } from '../inventory/services/product.service';
-import { MovementService } from './services/movement.service';
 import { Product } from '../inventory/product.dto';
 import { Buy } from './interfaces/buy.dto';
 import { Sell } from './interfaces/sell.dto';
 import { Expense } from './interfaces/expense.dto';
-import { ExpenseType } from './expense-type.enum';
+import { ExpenseType } from './enums/expense-type.enum';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from "../../components/navbar/navbar";
 
@@ -58,7 +57,6 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 })
 export class Movements {
   private productService = inject(ProductService);
-  private movementService = inject(MovementService);
   private fb = inject(FormBuilder);
 
   // Signals for reactive state
@@ -183,7 +181,6 @@ export class Movements {
 
   constructor() {
     this.loadProducts();
-    this.loadMovements();
 
     // Observar cambios en el tipo de movimiento para mostrar/ocultar campos
     this.form.get('movementType')?.valueChanges.subscribe(type => {
@@ -201,85 +198,7 @@ export class Movements {
     });
   }
 
-  loadMovements() {
-    // TODO: Actualizar el servicio para que devuelva MovementUnion[]
-    this.movementService.list().subscribe({
-      next: (m) => {
-        // Convertir Movement[] a MovementUnion[] según la estructura
-        const typedMovements = m.map(movement => {
-          // Aquí necesitarías lógica para determinar el tipo
-          // Por ahora asumimos que todos son Movement base
-          return movement as MovementUnion;
-        });
-        this.allMovements.set(typedMovements);
-      },
-      error: () => this.allMovements.set([])
-    });
-  }
-
   add() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const formValue = this.form.value;
-    const movementType = formValue.movementType as MovementType;
-    const product = this.products().find(p => p.id === formValue.productId);
-
-    if (!product) {
-      alert('Por favor selecciona un producto válido');
-      return;
-    }
-
-    let newMovement: MovementUnion;
-
-    const baseMovement = {
-      productId: formValue.productId!,
-      description: formValue.description!,
-      quantity: formValue.quantity!,
-      movementDate: formValue.movementDate ?
-        new Date(formValue.movementDate).toISOString() :
-        new Date().toISOString()
-    };
-
-    switch (movementType) {
-      case 'BUY':
-        newMovement = {
-          ...baseMovement,
-          unitPrice: formValue.unitPrice || 0
-        } as Buy;
-        break;
-
-      case 'SELL':
-        newMovement = {
-          ...baseMovement
-        } as Sell;
-        break;
-
-      case 'EXPENSE':
-        newMovement = {
-          ...baseMovement,
-          expenseType: formValue.expenseType || ExpenseType.OTHER,
-          totalPrice: formValue.totalPrice || 0
-        } as Expense;
-        break;
-
-      default:
-        throw new Error('Tipo de movimiento no válido');
-    }
-
-    // TODO: Actualizar el servicio para aceptar MovementUnion
-    this.movementService.create(newMovement as any).subscribe({
-      next: () => {
-        this.loadMovements();
-        this.resetForm();
-      },
-      error: (error) => {
-        console.error('Error al crear movimiento:', error);
-        alert('Error al crear el movimiento');
-      }
-    });
   }
 
   updateFormValidation(movementType: MovementType) {

@@ -2,7 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { EnvironmentDevelopment } from '../../../environments/environment-development';
-import { Sell } from '../interfaces/sell';
+import { Sell } from '../interfaces/sell.dto';
+import { CreateSellDto } from '../interfaces/create-sell.dto';
+import { UpdateSellDto } from '../interfaces/update-sell.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -49,13 +51,4 @@ export class SellService {
   getFullById(id: number): Observable<Sell> {
     return this.http.get<Sell>(`${this.apiUrl}/api/Sell/${id}/full`);
   }
-}
-
-// Interfaces para los DTOs que usa tu controller
-export interface CreateSellDto {
-
-}
-
-export interface UpdateSellDto {
-
 }
