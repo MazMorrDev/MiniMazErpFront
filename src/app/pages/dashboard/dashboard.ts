@@ -13,7 +13,7 @@ import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../inventory/services/product.service';
 import { MovementService } from '../movements/services/movement.service';
 import { Movement } from '../movements/interfaces/movement.dto';
-import { Inventory } from '../inventory/inventory.dto';
+import { Inventory } from '../inventory/interfaces/inventory.dto';
 import { InventoryService } from '../inventory/services/inventory.service';
 
 @Component({

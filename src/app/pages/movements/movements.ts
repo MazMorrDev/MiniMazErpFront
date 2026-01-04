@@ -15,7 +15,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { ProductService } from '../inventory/services/product.service';
-import { Product } from '../inventory/product.dto';
+import { Product } from '../inventory/interfaces/product.dto';
 import { Buy } from './interfaces/buy.dto';
 import { Sell } from './interfaces/sell.dto';
 import { Expense } from './interfaces/expense.dto';
