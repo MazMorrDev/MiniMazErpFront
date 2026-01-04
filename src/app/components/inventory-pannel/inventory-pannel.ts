@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavbarComponent } from "../../components/navbar/navbar";
+import { NavbarComponent } from "../navbar/navbar";
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,7 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-inventory',
+  selector: 'app-inventory-pannel',
   imports: [
     NavbarComponent,
     MatCardModule,
@@ -27,7 +27,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './inventory-pannel.html',
   styleUrl: './inventory-pannel.scss',
 })
-export class Inventory {
+export class InventoryPannel {
   lowStockOnly: boolean = false;
   searchQuery: string = '';
 }

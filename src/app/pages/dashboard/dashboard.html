@@ -1,14 +1,6 @@
 <app-navbar />
 
 <div class="dashboard-container">
-    <!-- Header -->
-    <div class="dashboard-header">
-        <h1>Dashboard</h1>
-        <button mat-raised-button color="primary" (click)="refresh()" [disabled]="isLoading()">
-            <mat-icon>refresh</mat-icon> Refresh
-        </button>
-    </div>
-
     <!-- Loading State -->
     @if (isLoading()) {
     <div class="loading-container">

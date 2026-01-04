@@ -9,7 +9,7 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    loadComponent: () => import('./pages/register-user/register').then((m) => m.RegisterUser)
+    loadComponent: () => import('./pages/register/register').then((m) => m.Register)
   },
 
   // Rutas principales protegidas
@@ -27,14 +27,14 @@ export const routes: Routes = [
       // Inventory - Gestión de inventario
       {
         path: 'inventory',
-        loadComponent: () => import('./pages/inventory-pannel/inventory-pannel').then((m) => m.Inventory),
+        loadComponent: () => import('./pages/inventory/inventory').then((m) => m.Inventory),
         data: { title: 'Inventory' }
       },
 
       // Movements - Movimientos (compras, ventas, gastos)
       {
         path: 'movements',
-        loadComponent: () => import('./components/movements-pannel/movements-pannel').then((m) => m.Movements),
+        loadComponent: () => import('./pages/movements/movements').then((m) => m.Movements),
         data: { title: 'Movements' }
       },
 

@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { EnvironmentDevelopment } from '../../../environments/environment-development';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Expense } from '../interfaces/expense.dto';
-import { CreateExpenseDto } from '../interfaces/create-expense.dto';
-import { UpdateExpenseDto } from '../interfaces/update-expense.dto';
+import { EnvironmentDevelopment } from '../environments/environment-development';
+import { Expense } from '../interfaces/movements/expense.dto';
+import { CreateExpenseDto } from '../interfaces/movements/create-expense.dto';
+import { UpdateExpenseDto } from '../interfaces/movements/update-expense.dto';
 
 @Injectable({
   providedIn: 'root',

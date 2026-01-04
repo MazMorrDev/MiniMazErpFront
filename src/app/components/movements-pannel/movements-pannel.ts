@@ -17,18 +17,17 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductService } from '../../services/product.service';
 import { BuyService } from '../../services/buy.service';
-import { SellService } from './services/sell.service';
-import { ExpenseService } from './services/expense.service';
 import { Product } from '../../interfaces/inventory/product.dto';
-import { Buy } from './interfaces/buy.dto';
-import { Sell } from './interfaces/sell.dto';
-import { Expense } from './interfaces/expense.dto';
-import { ExpenseType } from '../../enums/expense-type.enum';
-import { CreateBuyDto } from './interfaces/create-buy.dto';
-import { CreateSellDto } from './interfaces/create-sell.dto';
-import { CreateExpenseDto } from './interfaces/create-expense.dto';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from "../navbar/navbar";
+import { Buy } from '../../interfaces/movements/buy.dto';
+import { Sell } from '../../interfaces/movements/sell.dto';
+import { Expense } from '../../interfaces/movements/expense.dto';
+import { SellService } from '../../services/sell.service';
+import { ExpenseService } from '../../services/expense.service';
+import { ExpenseType } from '../../enums/expense-type.enum';
+import { CreateBuyDto } from '../../interfaces/movements/create-buy.dto';
+import { CreateSellDto } from '../../interfaces/movements/create-sell.dto';
+import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto';
 
 // Tipo unión para todos los movimientos posibles
 type MovementUnion = Buy | Sell | Expense;
@@ -38,7 +37,7 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 
 @Component({
   standalone: true,
-  selector: 'app-mov-pannel',
+  selector: 'app-movement-pannel',
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -55,14 +54,13 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
     MatTooltipModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    MatRadioModule,
-    NavbarComponent
+    MatRadioModule
 ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './movements-pannel.html',
   styleUrl: './movements-pannel.scss'
 })
-export class Movements {
+export class MovementsPannel {
   private productService = inject(ProductService);
   private buyService = inject(BuyService);
   private sellService = inject(SellService);

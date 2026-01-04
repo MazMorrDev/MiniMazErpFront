@@ -1,4 +1,4 @@
-import { ExpenseType } from "../enums/expense-type.enum";
+import { ExpenseType } from "../../enums/expense-type.enum";
 import { CreateMovementDto } from "./create-movement.dto";
 
 export interface CreateExpenseDto extends CreateMovementDto{

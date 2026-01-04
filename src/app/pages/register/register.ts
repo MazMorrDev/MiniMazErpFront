@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { RegisterRequest } from '../../interfaces/register/register-request';
 
 @Component({
-  selector: 'app-register-user',
+  selector: 'app-register',
   imports: [
     MatInputModule,
     MatIconModule,
@@ -22,7 +22,7 @@ import { RegisterRequest } from '../../interfaces/register/register-request';
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class RegisterUser {
+export class Register {
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;

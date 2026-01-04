@@ -54,7 +54,7 @@
 
 /* Formulario */
 .form-card {
-  margin-bottom: 24px;
+  margin: 24px;
 }
 
 .form-grid {
@@ -81,7 +81,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
-  
+
   mat-icon {
     margin-right: 4px;
   }
@@ -127,7 +127,7 @@
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
-  
+
   mat-icon {
     font-size: 16px;
     height: 16px;
@@ -155,7 +155,7 @@
   text-align: center;
   padding: 60px;
   color: #666;
-  
+
   mat-icon {
     font-size: 48px;
     height: 48px;
@@ -169,7 +169,7 @@
   text-align: center;
   padding: 60px;
   color: #666;
-  
+
   mat-spinner {
     margin: 0 auto 16px;
   }
@@ -180,20 +180,20 @@
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-grid,
   .filters-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .radio-group {
     flex-direction: column;
   }
-  
+
   .form-actions,
   .filter-actions {
     flex-direction: column;
-    
+
     button {
       width: 100%;
     }
