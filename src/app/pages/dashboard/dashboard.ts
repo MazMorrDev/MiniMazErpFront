@@ -10,11 +10,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
-import { ProductService } from '../inventory/product.service';
-import { MovementService } from '../movements/movement.service';
-import { Movement } from '../movements/movement.dto';
+import { ProductService } from '../inventory/services/product.service';
+import { MovementService } from '../movements/services/movement.service';
+import { Movement } from '../movements/interfaces/movement.dto';
 import { Inventory } from '../inventory/inventory.dto';
-import { InventoryService } from '../inventory/inventory.service';
+import { InventoryService } from '../inventory/services/inventory.service';
 
 @Component({
   selector: 'app-dashboard',

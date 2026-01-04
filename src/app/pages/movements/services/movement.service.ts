@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Movement } from './movement.dto';
+import { Movement } from '../interfaces/movement.dto';
 
 const STORAGE_KEY = 'inventory_movements_v1';
 
