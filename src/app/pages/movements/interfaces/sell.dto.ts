@@ -1,4 +1,4 @@
-import { MovementDto } from "./movement.dto";
+import { Movement } from "./movement.dto";
 
-export interface SellDto extends MovementDto{
+export interface Sell extends Movement{
 }
