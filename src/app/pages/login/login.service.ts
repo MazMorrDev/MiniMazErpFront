@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { LoginRequest } from './Dtos/login-request';
+import { LoginRequest } from './login-request.dto';
 import { Router } from '@angular/router';
 import { ApiTokenResponse } from '../../interfaces/token-response';
 import { EnvironmentDevelopment } from '../../environments/environment-development';

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Movement } from '../interfaces/movement';
+import { Movement } from './movement.dto';
 
 const STORAGE_KEY = 'inventory_movements_v1';
 
@@ -23,7 +23,7 @@ export class MovementService {
   }
 
   list(): Observable<Movement[]> {
-    return of(this.readAll().sort((a, b) => (a.date < b.date ? 1 : -1)));
+    return of(this.readAll().sort((a, b) => (a.movementDate < b.movementDate ? 1 : -1)));
   }
 
   create(m: Omit<Movement, 'id'>): Observable<Movement> {

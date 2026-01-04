@@ -16,11 +16,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { ProductService } from '../inventory/product.service';
 import { MovementService } from './movement.service';
-import { Product } from '../inventory/Dtos/product';
-import { Buy } from './Dtos/buy';
-import { Sell } from './Dtos/sell';
-import { Expense } from './Dtos/expense';
-import { ExpenseType } from './enums/expense-type';
+import { Product } from '../inventory/product.dto';
+import { Buy } from './buy.dto';
+import { Sell } from './sell.dto';
+import { Expense } from './expense.dto';
+import { ExpenseType } from './expense-type.enum';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from "../../components/navbar/navbar";
 

@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { LoginService } from './login.service';
-import { LoginRequest } from './Dtos/login-request';
+import { LoginRequest } from './login-request.dto';
 import { Router } from '@angular/router';
 
 @Component({

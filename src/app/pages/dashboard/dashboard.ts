@@ -12,8 +12,8 @@ import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../inventory/product.service';
 import { MovementService } from '../movements/movement.service';
-import { Movement } from '../movements/Dtos/movement';
-import { Inventory } from '../inventory/Dtos/inventory';
+import { Movement } from '../movements/movement.dto';
+import { Inventory } from '../inventory/inventory.dto';
 import { InventoryService } from '../inventory/inventory.service';
 
 @Component({

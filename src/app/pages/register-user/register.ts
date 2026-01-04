@@ -19,8 +19,8 @@ import { RegisterRequest } from './register-request';
     MatButtonModule,
     MatFormFieldModule
   ],
-  templateUrl: './register-user.html',
-  styleUrl: './register-user.scss',
+  templateUrl: './register.html',
+  styleUrl: './register.scss',
 })
 export class RegisterUser {
   name: string = '';
