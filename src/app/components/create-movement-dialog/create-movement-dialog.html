@@ -4,48 +4,111 @@
     <!-- Tipo de Movimiento -->
     <div class="form-section">
       <mat-label class="section-label">Tipo de Movimiento</mat-label>
-      <mat-radio-group 
-        formControlName="movementType" 
-        class="radio-group"
-        (change)="onMovementTypeChange($event)">
+      <mat-radio-group formControlName="movementType" class="radio-group" (change)="onMovementTypeChange($event)">
         @for (type of movementTypes; track type.value) {
-          <mat-radio-button [value]="type.value" class="radio-button">
-            <mat-icon>{{type.icon}}</mat-icon> {{type.label}}
-          </mat-radio-button>
+        <mat-radio-button [value]="type.value" class="radio-button">
+          <mat-icon>{{type.icon}}</mat-icon> {{type.label}}
+        </mat-radio-button>
         }
       </mat-radio-group>
       @if (form.get('movementType')?.hasError('required') && form.get('movementType')?.touched) {
-        <mat-error class="field-error">Este campo es requerido</mat-error>
+      <mat-error class="field-error">Este campo es requerido</mat-error>
       }
       <div class="field-hint">Seleccione el tipo de movimiento</div>
     </div>
 
     <!-- Producto -->
     <div class="form-section">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Producto</mat-label>
-        <mat-select formControlName="productId">
-          <mat-option [value]="null">-- Seleccionar Producto --</mat-option>
-          @for (product of data.products; track product.id) {
+      @if(form.get('movementType')?.value === 'BUY'){
+      <!-- Para COMPRAS: Toggle entre producto existente o nuevo -->
+      <div class="product-toggle-section">
+        <mat-label class="section-label">Selección de Producto</mat-label>
+        <mat-button-toggle-group formControlName="productOption" class="toggle-group" 
+                                 (change)="onProductOptionChange($event)">
+          <mat-button-toggle value="EXISTING" class="toggle-button">
+            <mat-icon>inventory_2</mat-icon> Producto Existente
+          </mat-button-toggle>
+          <mat-button-toggle value="NEW" class="toggle-button">
+            <mat-icon>add_circle</mat-icon> Nuevo Producto
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <!-- Opción 1: Seleccionar producto existente -->
+      @if (form.get('productOption')?.value === 'EXISTING') {
+      <div class="existing-product-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Seleccionar Producto *</mat-label>
+          <mat-select formControlName="productId">
+            <mat-option [value]="null">-- Seleccionar Producto Existente --</mat-option>
+            @for (product of data.products; track product.id) {
             <mat-option [value]="product.id">
               {{ product.name }} (ID: {{ product.id }})
             </mat-option>
+            }
+          </mat-select>
+          <mat-hint>Seleccione un producto del inventario</mat-hint>
+          @if (form.get('productId')?.hasError('required') && form.get('productId')?.touched) {
+          <mat-error>Debe seleccionar un producto</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      }
+
+      <!-- Opción 2: Crear producto nuevo -->
+      @if (form.get('productOption')?.value === 'NEW') {
+      <div class="new-product-section">
+        <h4 class="section-title">Información del Nuevo Producto</h4>
+        
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre del Producto *</mat-label>
+          <input matInput [formControl]="newProductNameControl" placeholder="Ej: Laptop HP 15.6''">
+          <mat-hint>Ingrese el nombre del producto (máx. 40 caracteres)</mat-hint>
+          @if (newProductNameControl.hasError('required') && newProductNameControl.touched) {
+          <mat-error>El nombre del producto es requerido</mat-error>
+          }
+          @if (newProductNameControl.hasError('maxlength')) {
+          <mat-error>Máximo 40 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Precio de Venta Sugerido (opcional)</mat-label>
+          <input matInput type="number" min="0" step="0.01" [formControl]="newProductSellPriceControl" 
+                 placeholder="Ej: 599.99">
+          <span matTextPrefix>$&nbsp;</span>
+          <mat-hint>Precio sugerido para futuras ventas</mat-hint>
+          @if (newProductSellPriceControl.hasError('min')) {
+          <mat-error>El precio no puede ser negativo</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      }
+      } @else {
+      <!-- Para VENTAS y GASTOS: Solo producto existente -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Producto *</mat-label>
+        <mat-select formControlName="productId">
+          <mat-option [value]="null">-- Seleccionar Producto --</mat-option>
+          @for (product of data.products; track product.id) {
+          <mat-option [value]="product.id">
+            {{ product.name }} (ID: {{ product.id }})
+          </mat-option>
           }
         </mat-select>
         <mat-hint>Seleccione un producto del inventario</mat-hint>
         @if (form.get('productId')?.hasError('required') && form.get('productId')?.touched) {
-          <mat-error>Debe seleccionar un producto</mat-error>
+        <mat-error>Debe seleccionar un producto</mat-error>
         }
       </mat-form-field>
+      }
     </div>
 
     <!-- Descripción -->
     <div class="form-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Descripción</mat-label>
-        <textarea matInput 
-          formControlName="description"
-          placeholder="Ej: Compra de productos para inventario"
+        <textarea matInput formControlName="description" placeholder="Ej: Compra de productos para inventario"
           rows="2"></textarea>
         <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/255 caracteres</mat-hint>
       </mat-form-field>
@@ -54,19 +117,14 @@
     <!-- Cantidad -->
     <div class="form-section">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Cantidad</mat-label>
-        <input matInput 
-          type="number" 
-          min="1" 
-          step="1"
-          formControlName="quantity"
-          placeholder="Ej: 10">
+        <mat-label>Cantidad *</mat-label>
+        <input matInput type="number" min="1" step="1" formControlName="quantity" placeholder="Ej: 10">
         <mat-hint>Número entero mayor a 0</mat-hint>
         @if (form.get('quantity')?.hasError('required') && form.get('quantity')?.touched) {
-          <mat-error>Cantidad es requerida</mat-error>
+        <mat-error>Cantidad es requerida</mat-error>
         }
         @if (form.get('quantity')?.hasError('min')) {
-          <mat-error>Cantidad mínima: 1 unidad</mat-error>
+        <mat-error>Cantidad mínima: 1 unidad</mat-error>
         }
       </mat-form-field>
     </div>
@@ -74,145 +132,119 @@
     <!-- Fecha -->
     <div class="form-section">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Fecha del Movimiento</mat-label>
-        <input matInput 
-          [matDatepicker]="picker" 
-          formControlName="movementDate"
-          placeholder="Seleccione una fecha">
+        <mat-label>Fecha del Movimiento *</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="movementDate" placeholder="Seleccione una fecha">
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
         <mat-hint>Formato: DD/MM/YYYY</mat-hint>
         @if (form.get('movementDate')?.hasError('required') && form.get('movementDate')?.touched) {
-          <mat-error>Fecha es requerida</mat-error>
+        <mat-error>Fecha es requerida</mat-error>
         }
       </mat-form-field>
     </div>
 
     <!-- Campos específicos para COMPRA -->
     @if (form.get('movementType')?.value === 'BUY') {
-      <div class="conditional-section">
-        <h4 class="section-title">Información de Compra</h4>
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Precio Unitario ($) *</mat-label>
-            <input matInput 
-              type="number" 
-              min="0" 
-              step="0.01"
-              formControlName="unitPrice"
-              placeholder="Ej: 15.99">
-            <span matTextPrefix>$&nbsp;</span>
-            <mat-hint>Número decimal (2 decimales)</mat-hint>
-            @if (form.get('unitPrice')?.hasError('required') && form.get('unitPrice')?.touched) {
-              <mat-error>Precio unitario es requerido</mat-error>
-            }
-            @if (form.get('unitPrice')?.hasError('min')) {
-              <mat-error>El precio no puede ser negativo</mat-error>
-            }
-          </mat-form-field>
-        </div>
+    <div class="conditional-section">
+      <h4 class="section-title">Información de Compra</h4>
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Precio Unitario ($) *</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="unitPrice" placeholder="Ej: 15.99">
+          <span matTextPrefix>$&nbsp;</span>
+          <mat-hint>Número decimal (2 decimales)</mat-hint>
+          @if (form.get('unitPrice')?.hasError('required') && form.get('unitPrice')?.touched) {
+          <mat-error>Precio unitario es requerido</mat-error>
+          }
+          @if (form.get('unitPrice')?.hasError('min')) {
+          <mat-error>El precio no puede ser negativo</mat-error>
+          }
+        </mat-form-field>
       </div>
+    </div>
     }
 
     <!-- Campos específicos para VENTA -->
     @if (form.get('movementType')?.value === 'SELL') {
-      <div class="conditional-section">
-        <h4 class="section-title">Información de Venta</h4>
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Precio de Venta ($) *</mat-label>
-            <input matInput 
-              type="number" 
-              min="0" 
-              step="0.01"
-              formControlName="salePrice"
-              placeholder="Ej: 29.99">
-            <span matTextPrefix>$&nbsp;</span>
-            <mat-hint>Número decimal (2 decimales)</mat-hint>
-            @if (form.get('salePrice')?.hasError('required') && form.get('salePrice')?.touched) {
-              <mat-error>Precio de venta es requerido</mat-error>
-            }
-            @if (form.get('salePrice')?.hasError('min')) {
-              <mat-error>El precio no puede ser negativo</mat-error>
-            }
-          </mat-form-field>
-        </div>
-
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>% Descuento</mat-label>
-            <input matInput 
-              type="number" 
-              min="0" 
-              max="100" 
-              step="0.01"
-              formControlName="discountPercentage"
-              placeholder="Ej: 10">
-            <span matTextSuffix>%</span>
-            <mat-hint>Rango: 0-100% (opcional)</mat-hint>
-            @if (form.get('discountPercentage')?.hasError('min')) {
-              <mat-error>Descuento no puede ser negativo</mat-error>
-            }
-            @if (form.get('discountPercentage')?.hasError('max')) {
-              <mat-error>Descuento máximo: 100%</mat-error>
-            }
-          </mat-form-field>
-        </div>
+    <div class="conditional-section">
+      <h4 class="section-title">Información de Venta</h4>
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Precio de Venta ($) *</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="salePrice" placeholder="Ej: 29.99">
+          <span matTextPrefix>$&nbsp;</span>
+          <mat-hint>Número decimal (2 decimales)</mat-hint>
+          @if (form.get('salePrice')?.hasError('required') && form.get('salePrice')?.touched) {
+          <mat-error>Precio de venta es requerido</mat-error>
+          }
+          @if (form.get('salePrice')?.hasError('min')) {
+          <mat-error>El precio no puede ser negativo</mat-error>
+          }
+        </mat-form-field>
       </div>
+
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>% Descuento</mat-label>
+          <input matInput type="number" min="0" max="100" step="0.01" formControlName="discountPercentage"
+            placeholder="Ej: 10">
+          <span matTextSuffix>%</span>
+          <mat-hint>Rango: 0-100% (opcional)</mat-hint>
+          @if (form.get('discountPercentage')?.hasError('min')) {
+          <mat-error>Descuento no puede ser negativo</mat-error>
+          }
+          @if (form.get('discountPercentage')?.hasError('max')) {
+          <mat-error>Descuento máximo: 100%</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
     }
 
     <!-- Campos específicos para GASTO -->
     @if (form.get('movementType')?.value === 'EXPENSE') {
-      <div class="conditional-section">
-        <h4 class="section-title">Información de Gasto</h4>
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo de Gasto *</mat-label>
-            <mat-select formControlName="expenseType">
-              @for (expType of expenseTypes; track expType.value) {
-                <mat-option [value]="expType.value">{{ expType.label }}</mat-option>
-              }
-            </mat-select>
-            <mat-hint>Seleccione la categoría del gasto</mat-hint>
-            @if (form.get('expenseType')?.hasError('required') && form.get('expenseType')?.touched) {
-              <mat-error>Tipo de gasto es requerido</mat-error>
+    <div class="conditional-section">
+      <h4 class="section-title">Información de Gasto</h4>
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipo de Gasto *</mat-label>
+          <mat-select formControlName="expenseType">
+            @for (expType of expenseTypes; track expType.value) {
+            <mat-option [value]="expType.value">{{ expType.label }}</mat-option>
             }
-          </mat-form-field>
-        </div>
-
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Total Gasto ($)</mat-label>
-            <input matInput 
-              type="number" 
-              min="0" 
-              step="0.01"
-              formControlName="totalPrice"
-              placeholder="Ej: 150.50">
-            <span matTextPrefix>$&nbsp;</span>
-            <mat-hint>Número decimal (2 decimales)</mat-hint>
-            @if (form.get('totalPrice')?.hasError('required') && form.get('totalPrice')?.touched) {
-              <mat-error>Total es requerido</mat-error>
-            }
-            @if (form.get('totalPrice')?.hasError('min')) {
-              <mat-error>Total no puede ser negativo</mat-error>
-            }
-          </mat-form-field>
-        </div>
+          </mat-select>
+          <mat-hint>Seleccione la categoría del gasto</mat-hint>
+          @if (form.get('expenseType')?.hasError('required') && form.get('expenseType')?.touched) {
+          <mat-error>Tipo de gasto es requerido</mat-error>
+          }
+        </mat-form-field>
       </div>
+
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Total Gasto ($)</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="totalPrice" placeholder="Ej: 150.50">
+          <span matTextPrefix>$&nbsp;</span>
+          <mat-hint>Número decimal (2 decimales)</mat-hint>
+          @if (form.get('totalPrice')?.hasError('required') && form.get('totalPrice')?.touched) {
+          <mat-error>Total es requerido</mat-error>
+          }
+          @if (form.get('totalPrice')?.hasError('min')) {
+          <mat-error>Total no puede ser negativo</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
     }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button (click)="onCancel()">Cancelar</button>
-  <button mat-raised-button 
-          color="primary" 
-          (click)="onSubmit()" 
-          [disabled]="form.invalid || isLoading()">
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!isFormValid() || isLoading()">
     @if (isLoading()) {
-      <div class="custom-spinner-small"></div>
+    <div class="custom-spinner-small"></div>
     } @else {
-      <mat-icon>save</mat-icon> Guardar
+    <mat-icon>save</mat-icon> Guardar
     }
   </button>
 </mat-dialog-actions>

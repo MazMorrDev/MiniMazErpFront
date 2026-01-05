@@ -6,79 +6,97 @@
   </mat-card-header>
 
   <mat-card-content>
+    <!-- Mensaje de error general -->
+    @if (errorMessage) {
+    <div class="error-message-container">
+      <mat-icon class="error-icon">error</mat-icon>
+      <span class="error-message-text">{{ errorMessage }}</span>
+    </div>
+    }
+
+    <!-- Mensaje de éxito -->
+    @if (successMessage) {
+    <div class="success-message-container">
+      <mat-icon class="success-icon">check_circle</mat-icon>
+      <span class="success-message-text">{{ successMessage }}</span>
+    </div>
+    }
+
     <form (ngSubmit)="onSubmit()" class="login-form">
       <!-- Name Field -->
-      <mat-form-field class="full-width">
+      <mat-form-field appearance="outline" class="full-width">
         <mat-label>Nombre</mat-label>
-        <input 
-          matInput 
-          [(ngModel)]="name" 
-          name="name"
-          type="name" 
-          placeholder="Marco Antonio"
-          required
-          #nameInput="ngModel">
+        <input matInput [(ngModel)]="name" name="name" type="text" 
+          placeholder="Ej: Marco Antonio" required
+          [disabled]="isLoading" #nameInput="ngModel">
         <mat-icon matSuffix>person</mat-icon>
+        <mat-hint>Ingresa tu nombre</mat-hint>
         
         @if (nameInput.invalid && nameInput.touched) {
-          <mat-error>
-            Por favor ingresa un nombre válido
-          </mat-error>
+        <mat-error>
+          Por favor ingresa un nombre válido
+        </mat-error>
         }
       </mat-form-field>
 
       <!-- Password Field -->
-      <mat-form-field class="full-width">
+      <mat-form-field appearance="outline" class="full-width">
         <mat-label>Contraseña</mat-label>
-        <input 
-          matInput 
-          [(ngModel)]="password" 
-          name="password"
+        <input matInput [(ngModel)]="password" name="password" 
           [type]="hidePassword ? 'password' : 'text'"
-          placeholder="Mínimo 6 caracteres"
-          minlength="6"
-          required
-          #passwordInput="ngModel">
+          placeholder="Mínimo 6 caracteres" minlength="6" required 
+          [disabled]="isLoading" #passwordInput="ngModel">
         
-        <button 
-          mat-icon-button 
-          matSuffix 
-          type="button"
+        <mat-hint>Ingresa tu contraseña</mat-hint>
+        
+        <button mat-icon-button matSuffix type="button" 
           (click)="hidePassword = !hidePassword"
           [attr.aria-label]="'Mostrar contraseña'"
-          [attr.aria-pressed]="hidePassword">
+          [attr.aria-pressed]="hidePassword"
+          [disabled]="isLoading">
           <mat-icon>
             {{ hidePassword ? 'visibility_off' : 'visibility' }}
           </mat-icon>
         </button>
         
         @if (passwordInput.errors?.['required'] && passwordInput.touched) {
-          <mat-error>
-            La contraseña es requerida
-          </mat-error>
+        <mat-error>
+          La contraseña es requerida
+        </mat-error>
         }
         @if (passwordInput.errors?.['minlength'] && passwordInput.touched) {
-          <mat-error>
-            Mínimo 6 caracteres
-          </mat-error>
+        <mat-error>
+          Mínimo 6 caracteres
+        </mat-error>
         }
       </mat-form-field>
 
       <!-- Submit Button -->
-      <button 
-        mat-raised-button 
-        color="primary" 
-        type="submit"
+      <button mat-raised-button color="primary" type="submit" 
         class="login-button"
-        [disabled]="!name || !password || password.length < 6">
-        Iniciar Sesión
+        [disabled]="!name || !password || password.length < 6 || isLoading">
+        @if (isLoading) {
+        <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+        <span class="loading-text">Iniciando Sesión...</span>
+        } @else {
+        <mat-icon class="login-icon">lock_open</mat-icon>
+        <span>Iniciar Sesión</span>
+        }
       </button>
     </form>
-  </mat-card-content>
 
-  <mat-card-actions>
-    <div style="text-align: center; width: 100%; margin-top: 1rem;">
-      <a href="/register" mat-button color="accent">Registrese Aquí</a>
+    <!-- Divider -->
+    <div class="divider">
+      <span>O</span>
     </div>
-  </mat-card-actions>
+
+    <!-- Register Link -->
+    <div class="register-link">
+      <p>¿No tienes una cuenta?</p>
+      <a mat-button color="accent" routerLink="/register" [disabled]="isLoading">
+        <mat-icon>person_add</mat-icon>
+        Regístrate Aquí
+      </a>
+    </div>
+  </mat-card-content>
 </mat-card>

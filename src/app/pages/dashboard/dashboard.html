@@ -4,7 +4,8 @@
     <!-- Loading State -->
     @if (isLoading()) {
     <div class="loading-container">
-        <p>Loading dashboard data...</p>
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Cargando datos del dashboard...</p>
     </div>
     } @else {
     <!-- Stats Cards -->
@@ -18,11 +19,11 @@
                     </div>
                     <div class="stats-text">
                         <h3>{{ totalProducts() }}</h3>
-                        <p>Total Products</p>
+                        <p>Total Productos</p>
                     </div>
                 </div>
                 <mat-divider></mat-divider>
-                <p class="stats-footer">Total stock: {{ stockSummary().totalStock }} units</p>
+                <p class="stats-footer">Stock total: {{ stockSummary().totalStock }} unidades</p>
             </mat-card-content>
         </mat-card>
 
@@ -35,13 +36,13 @@
                     </div>
                     <div class="stats-text">
                         <h3>{{ totalMovements() }}</h3>
-                        <p>Total Movements</p>
+                        <p>Total Movimientos</p>
                     </div>
                 </div>
                 <mat-divider></mat-divider>
                 <div class="stats-footer">
-                    <span style="color: #2e7d32;">{{ movementStats().ins }} IN</span> |
-                    <span style="color: #c62828;">{{ movementStats().outs }} OUT</span>
+                    <span style="color: #2e7d32;">{{ movementStats().ins }} ENTRADAS</span> |
+                    <span style="color: #c62828;">{{ movementStats().outs }} SALIDAS</span>
                 </div>
             </mat-card-content>
         </mat-card>
@@ -55,11 +56,11 @@
                     </div>
                     <div class="stats-text">
                         <h3>{{ stockSummary().avgStock }}</h3>
-                        <p>Avg Stock per Product</p>
+                        <p>Stock Promedio</p>
                     </div>
                 </div>
                 <mat-divider></mat-divider>
-                <p class="stats-footer">{{ stockSummary().lowStockItems }} low stock items</p>
+                <p class="stats-footer">{{ stockSummary().lowStockItems }} productos con stock bajo</p>
             </mat-card-content>
         </mat-card>
 
@@ -72,57 +73,100 @@
                     </div>
                     <div class="stats-text">
                         <h3>{{ movementStats().weeklyCount }}</h3>
-                        <p>Movements (7 days)</p>
+                        <p>Movimientos (7 días)</p>
                     </div>
                 </div>
                 <mat-divider></mat-divider>
-                <p class="stats-footer">{{ movementStats().monthlyCount }} movements this month</p>
+                <p class="stats-footer">{{ movementStats().monthlyCount }} movimientos este mes</p>
             </mat-card-content>
         </mat-card>
     </div>
 
     <!-- Charts and Tables Grid -->
     <div class="main-grid">
-        <!-- Recent Movements -->
+        <!-- Recent Movements (Ahora como tabla) -->
         <mat-card class="main-card">
             <mat-card-header>
                 <mat-card-title>
-                    <mat-icon>history</mat-icon> Recent Movements
+                    <mat-icon>history</mat-icon> Movimientos Recientes
                 </mat-card-title>
-                <mat-card-subtitle>Last 5 movements across all products</mat-card-subtitle>
+                <mat-card-subtitle>Últimos 5 movimientos en todos los productos</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
                 @if (recentMovements().length > 0) {
-                <div class="movements-list">
-                    @for (movement of recentMovements(); track movement.id) {
-                    <div class="movement-item">
-                        <div class="movement-info">
-                            <span class="product-name">{{ movement.description }}</span>
-                            <span class="movement-date">{{ movement.movementDate | date:'MMM d, HH:mm' }}</span>
-                        </div>
-                        <div class="movement-details">
-                            <mat-chip
-                                [class]="movement.type === 'IN' ? 'chip-in' : (movement.type === 'OUT' ? 'chip-out' : 'chip-expense')">
-                                {{ movement.type }}
-                            </mat-chip>
-                            <span class="quantity">{{ movement.quantity }} units</span>
-                        </div>
-                    </div>
-                    @if (!$last) {
-                    <mat-divider></mat-divider>
-                    }
-                    }
+                <div class="table-container">
+                    <table mat-table [dataSource]="recentMovements()" class="movements-table">
+                        <!-- Product Name -->
+                        <ng-container matColumnDef="productName">
+                            <th mat-header-cell *matHeaderCellDef>Producto</th>
+                            <td mat-cell *matCellDef="let movement">
+                                <div class="product-cell">
+                                    <mat-icon>inventory_2</mat-icon>
+                                    <span>{{ getProductName(movement.productId) }}</span>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <!-- Description -->
+                        <ng-container matColumnDef="description">
+                            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+                            <td mat-cell *matCellDef="let movement">
+                                <span class="description-text">{{ movement.description || 'Sin descripción' }}</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Type -->
+                        <ng-container matColumnDef="type">
+                            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                            <td mat-cell *matCellDef="let movement">
+                                @if (movement.type === 'IN') {
+                                <mat-chip class="chip-in">
+                                    <mat-icon>arrow_downward</mat-icon> ENTRADA
+                                </mat-chip>
+                                } @else if (movement.type === 'OUT') {
+                                <mat-chip class="chip-out">
+                                    <mat-icon>arrow_upward</mat-icon> SALIDA
+                                </mat-chip>
+                                } @else {
+                                <mat-chip class="chip-expense">
+                                    <mat-icon>money_off</mat-icon> GASTO
+                                </mat-chip>
+                                }
+                            </td>
+                        </ng-container>
+
+                        <!-- Quantity -->
+                        <ng-container matColumnDef="quantity">
+                            <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+                            <td mat-cell *matCellDef="let movement">
+                                <span class="quantity-badge" [class]="movement.type.toLowerCase() + '-badge'">
+                                    {{ movement.quantity }} unidades
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Date -->
+                        <ng-container matColumnDef="date">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let movement">
+                                <span class="date-text">{{ movement.movementDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="['productName', 'description', 'type', 'quantity', 'date']"></tr>
+                        <tr mat-row *matRowDef="let row; columns: ['productName', 'description', 'type', 'quantity', 'date'];"></tr>
+                    </table>
                 </div>
                 } @else {
                 <div class="no-data">
                     <mat-icon>inventory_2</mat-icon>
-                    <p>No recent movements found</p>
+                    <p>No hay movimientos recientes</p>
                 </div>
                 }
             </mat-card-content>
             <mat-card-actions>
                 <button mat-button color="primary" routerLink="/movements">
-                    <mat-icon>list</mat-icon> View All Movements
+                    <mat-icon>list</mat-icon> Ver Todos los Movimientos
                 </button>
             </mat-card-actions>
         </mat-card>
@@ -131,29 +175,30 @@
         <mat-card class="main-card">
             <mat-card-header>
                 <mat-card-title>
-                    <mat-icon>store</mat-icon> Stock Overview
+                    <mat-icon>store</mat-icon> Resumen de Stock
                 </mat-card-title>
-                <mat-card-subtitle>Current stock status by product</mat-card-subtitle>
+                <mat-card-subtitle>Estado actual del stock por producto</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
+                @if (getInventoriesWithProductInfo().length > 0) {
                 <div class="table-container">
                     <table mat-table [dataSource]="getInventoriesWithProductInfo()" class="stock-table">
                         <!-- Product Name Column -->
                         <ng-container matColumnDef="productName">
-                            <th mat-header-cell *matHeaderCellDef>Product</th>
+                            <th mat-header-cell *matHeaderCellDef>Producto</th>
                             <td mat-cell *matCellDef="let inventory">
                                 <div class="product-cell">
                                     <mat-icon>inventory_2</mat-icon>
-                                    <span>{{ getProductName(inventory.productId) }}</span>
+                                    <span>{{ inventory.productName }}</span>
                                 </div>
                             </td>
                         </ng-container>
 
                         <!-- Stock Column -->
                         <ng-container matColumnDef="stock">
-                            <th mat-header-cell *matHeaderCellDef>Current Stock</th>
+                            <th mat-header-cell *matHeaderCellDef>Stock Actual</th>
                             <td mat-cell *matCellDef="let inventory">
-                                <mat-chip [color]="getStockColor(inventory.stock)">
+                                <mat-chip [color]="getStockColor(inventory.stock)" class="stock-chip">
                                     {{ inventory.stock }}
                                 </mat-chip>
                             </td>
@@ -161,10 +206,10 @@
 
                         <!-- Status Column -->
                         <ng-container matColumnDef="status">
-                            <th mat-header-cell *matHeaderCellDef>Status</th>
+                            <th mat-header-cell *matHeaderCellDef>Estado</th>
                             <td mat-cell *matCellDef="let inventory">
                                 @let status = getProductStatus(inventory.stock);
-                                <mat-chip [color]="getStatusColor(status)">
+                                <mat-chip [color]="getStatusColor(status)" class="status-chip">
                                     {{ status }}
                                 </mat-chip>
                             </td>
@@ -174,17 +219,16 @@
                         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                     </table>
                 </div>
-
-                @if (getInventoriesWithProductInfo().length === 0) {
+                } @else {
                 <div class="no-data">
                     <mat-icon>inventory_2</mat-icon>
-                    <p>No inventory data found</p>
+                    <p>No hay datos de inventario</p>
                 </div>
                 }
             </mat-card-content>
             <mat-card-actions>
                 <button mat-button color="primary" routerLink="/inventory">
-                    <mat-icon>view_list</mat-icon> Manage Inventory
+                    <mat-icon>view_list</mat-icon> Gestionar Inventario
                 </button>
             </mat-card-actions>
         </mat-card>
@@ -193,30 +237,30 @@
         <mat-card class="main-card quick-actions">
             <mat-card-header>
                 <mat-card-title>
-                    <mat-icon>flash_on</mat-icon> Quick Actions
+                    <mat-icon>flash_on</mat-icon> Acciones Rápidas
                 </mat-card-title>
-                <mat-card-subtitle>Frequently used actions</mat-card-subtitle>
+                <mat-card-subtitle>Acciones de uso frecuente</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
                 <div class="actions-grid">
                     <button mat-raised-button color="primary" class="action-button" routerLink="/movements">
                         <mat-icon>add_circle</mat-icon>
-                        <span>New Movement</span>
+                        <span>Nuevo Movimiento</span>
                     </button>
 
                     <button mat-raised-button color="accent" class="action-button" routerLink="/inventory">
                         <mat-icon>add</mat-icon>
-                        <span>Add Product</span>
+                        <span>Agregar Producto</span>
                     </button>
 
                     <button mat-raised-button color="warn" class="action-button" (click)="refresh()">
                         <mat-icon>refresh</mat-icon>
-                        <span>Refresh Data</span>
+                        <span>Actualizar Datos</span>
                     </button>
 
                     <button mat-raised-button class="action-button" routerLink="/movements">
                         <mat-icon>list_alt</mat-icon>
-                        <span>View Reports</span>
+                        <span>Ver Reportes</span>
                     </button>
                 </div>
             </mat-card-content>
@@ -226,26 +270,36 @@
         <mat-card class="main-card">
             <mat-card-header>
                 <mat-card-title>
-                    <mat-icon>bar_chart</mat-icon> Movement Statistics
+                    <mat-icon>bar_chart</mat-icon> Estadísticas de Movimientos
                 </mat-card-title>
-                <mat-card-subtitle>IN vs OUT distribution</mat-card-subtitle>
+                <mat-card-subtitle>Distribución ENTRADAS vs SALIDAS</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
                 <div class="stats-chart">
+                    @if (movementStats().ins === 0 && movementStats().outs === 0) {
+                    <div class="no-chart-data">
+                        <mat-icon>bar_chart</mat-icon>
+                        <p>No hay datos de movimientos para mostrar</p>
+                    </div>
+                    } @else {
                     <div class="chart-container">
                         <div class="chart-bar">
-                            <div class="bar-label">IN ({{ movementStats().ins }})</div>
+                            <div class="bar-label">ENTRADAS ({{ movementStats().ins }})</div>
                             <div class="bar-track">
+                                @if (movementStats().insPercentage > 0) {
                                 <div class="bar-fill in-fill" [style.width.%]="movementStats().insPercentage"></div>
+                                }
                             </div>
                             <div class="bar-value">{{ movementStats().insPercentage }}%</div>
                         </div>
 
                         <div class="chart-bar">
-                            <div class="bar-label">OUT ({{ movementStats().outs }})</div>
+                            <div class="bar-label">SALIDAS ({{ movementStats().outs }})</div>
                             <div class="bar-track">
+                                @if (100 - movementStats().insPercentage > 0) {
                                 <div class="bar-fill out-fill" [style.width.%]="100 - movementStats().insPercentage">
                                 </div>
+                                }
                             </div>
                             <div class="bar-value">{{ 100 - movementStats().insPercentage }}%</div>
                         </div>
@@ -254,13 +308,14 @@
                     <div class="chart-legend">
                         <div class="legend-item">
                             <div class="legend-color in-color"></div>
-                            <span>IN Movements</span>
+                            <span>Entradas (Compra)</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color out-color"></div>
-                            <span>OUT Movements</span>
+                            <span>Salidas (Venta)</span>
                         </div>
                     </div>
+                    }
                 </div>
             </mat-card-content>
         </mat-card>

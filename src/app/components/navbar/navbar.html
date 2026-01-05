@@ -2,7 +2,7 @@
 <mat-toolbar class="navbar-toolbar">
   <div class="navbar-container">
     <!-- Logo -->
-    <a routerLink="/" class="logo-container" matTooltip="Go to Home">
+    <a routerLink="/dashboard" class="logo-container" matTooltip="Go to Home">
       <div class="logo-icon">
         <mat-icon>inventory</mat-icon>
       </div>
@@ -51,7 +51,7 @@
   @if (isMenuOpen) {
     <nav class="mobile-nav">
       <button mat-button
-              routerLink="/"
+              routerLink="/dashboard"
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               class="mobile-nav-button"
@@ -61,7 +61,7 @@
       </button>
       
       <button mat-button
-              routerLink="/mov-inv"
+              routerLink="/movements"
               routerLinkActive="active"
               class="mobile-nav-button"
               (click)="toggleMenu()">
@@ -70,7 +70,7 @@
       </button>
       
       <button mat-button
-              routerLink="/products"
+              routerLink="/inventory"
               routerLinkActive="active"
               class="mobile-nav-button"
               (click)="toggleMenu()">

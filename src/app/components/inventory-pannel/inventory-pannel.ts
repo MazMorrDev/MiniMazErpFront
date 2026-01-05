@@ -13,7 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../services/inventory.service';
 import { Inventory } from '../../interfaces/inventory/inventory.dto';
-import { CreateProductDialog } from '../create-product-dialog/create-product-dialog';
+import { UpdateProductDialog } from '../update-product-dialog/update-product-dialog';
 
 @Component({
   selector: 'app-inventory-pannel',
@@ -83,7 +83,7 @@ export class InventoryPannel implements OnInit {
   }
   
   openAddProductDialog(): void {
-    const dialogRef = this.dialog.open(CreateProductDialog, {
+    const dialogRef = this.dialog.open(UpdateProductDialog, {
       width: '500px',
       autoFocus: true
     });
