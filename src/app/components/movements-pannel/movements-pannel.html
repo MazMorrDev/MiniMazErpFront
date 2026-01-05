@@ -1,156 +1,122 @@
-<!-- Form Section -->
-<mat-card class="form-card">
-  <mat-card-header>
-    <mat-card-title>Nuevo Movimiento</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <form [formGroup]="form" (ngSubmit)="add()" class="mov-form">
-      <div class="form-grid">
-        <!-- Tipo de Movimiento -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Tipo de Movimiento</mat-label>
-          <mat-radio-group formControlName="movementType" class="radio-group">
-            @for (type of movementTypes(); track type.value) {
-            <mat-radio-button [value]="type.value" class="radio-button">
-              <mat-icon>{{type.icon}}</mat-icon> {{type.label}}
-            </mat-radio-button>
-            }
-          </mat-radio-group>
-        </mat-form-field>
-
-        <!-- Inventory ID (podría ser un select si tienes múltiples inventarios) -->
-        <mat-form-field appearance="outline">
-          <mat-label>ID de Inventario</mat-label>
-          <input matInput type="number" min="1" formControlName="inventoryId">
-          @if (form.get('inventoryId')?.hasError('required')) {
-          <mat-error>ID de inventario es requerido</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Producto -->
-        <mat-form-field appearance="outline">
-          <mat-label>Producto</mat-label>
-          <mat-select formControlName="productId">
-            <mat-option [value]="null">-- Seleccionar Producto --</mat-option>
-            @for (product of products(); track product.id) {
-            <mat-option [value]="product.id">{{ product.name }}</mat-option>
-            }
-          </mat-select>
-          @if (form.get('productId')?.hasError('required')) {
-          <mat-error>Producto es requerido</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Descripción -->
-        <mat-form-field appearance="outline">
-          <mat-label>Descripción</mat-label>
-          <input matInput formControlName="description">
-        </mat-form-field>
-
-        <!-- Cantidad -->
-        <mat-form-field appearance="outline">
-          <mat-label>Cantidad</mat-label>
-          <input matInput type="number" min="1" formControlName="quantity">
-          @if (form.get('quantity')?.hasError('required')) {
-          <mat-error>Cantidad es requerida</mat-error>
-          }
-          @if (form.get('quantity')?.hasError('min')) {
-          <mat-error>Cantidad mínima: 1</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Fecha -->
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="movementDate">
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-          @if (form.get('movementDate')?.hasError('required')) {
-          <mat-error>Fecha es requerida</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Campos específicos para COMPRA -->
-        @if (form.get('movementType')?.value === 'BUY') {
-        <mat-form-field appearance="outline">
-          <mat-label>Precio Unitario ($)</mat-label>
-          <input matInput type="number" min="0" step="0.01" formControlName="unitPrice">
-          @if (form.get('unitPrice')?.hasError('required')) {
-          <mat-error>Precio unitario es requerido</mat-error>
-          }
-          @if (form.get('unitPrice')?.hasError('min')) {
-          <mat-error>Precio no puede ser negativo</mat-error>
-          }
-        </mat-form-field>
-        }
-
-        <!-- Campos específicos para VENTA -->
-        @if (form.get('movementType')?.value === 'SELL') {
-        <mat-form-field appearance="outline">
-          <mat-label>Precio de Venta ($)</mat-label>
-          <input matInput type="number" min="0" step="0.01" formControlName="salePrice">
-          @if (form.get('salePrice')?.hasError('required')) {
-          <mat-error>Precio de venta es requerido</mat-error>
-          }
-          @if (form.get('salePrice')?.hasError('min')) {
-          <mat-error>Precio no puede ser negativo</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>% Descuento</mat-label>
-          <input matInput type="number" min="0" max="100" step="0.01" formControlName="discountPercentage">
-          @if (form.get('discountPercentage')?.hasError('min')) {
-          <mat-error>Descuento no puede ser negativo</mat-error>
-          }
-          @if (form.get('discountPercentage')?.hasError('max')) {
-          <mat-error>Descuento máximo: 100%</mat-error>
-          }
-        </mat-form-field>
-        }
-
-        <!-- Campos específicos para GASTO -->
-        @if (form.get('movementType')?.value === 'EXPENSE') {
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de Gasto</mat-label>
-          <mat-select formControlName="expenseType">
-            @for (expType of expenseTypes(); track expType.value) {
-            <mat-option [value]="expType.value">{{ expType.label }}</mat-option>
-            }
-          </mat-select>
-          @if (form.get('expenseType')?.hasError('required')) {
-          <mat-error>Tipo de gasto es requerido</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Total Gasto ($)</mat-label>
-          <input matInput type="number" min="0" step="0.01" formControlName="totalPrice">
-          @if (form.get('totalPrice')?.hasError('required')) {
-          <mat-error>Total es requerido</mat-error>
-          }
-          @if (form.get('totalPrice')?.hasError('min')) {
-          <mat-error>Total no puede ser negativo</mat-error>
-          }
-        </mat-form-field>
-        }
-
-        <!-- Acciones del Formulario -->
-        <div class="form-actions full-width">
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || isLoading()">
-            @if (isLoading()) {
-            <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-            <span style="display: flex; align-items: center; gap: 8px;">
-              <mat-icon>add</mat-icon> Registrar Movimiento
-            </span>
-            }
+<div class="mov-inv-container">
+  <!-- Toolbar -->
+  <mat-card class="toolbar-card">
+    <mat-card-content>
+      <div class="toolbar-grid">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar por producto o descripción</mat-label>
+          <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" type="text"
+            placeholder="Buscar...">
+          <mat-icon matSuffix>search</mat-icon>
+          @if (searchQuery()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
           </button>
-          <button mat-button type="button" (click)="resetForm()" [disabled]="isLoading()">
-            <mat-icon>clear</mat-icon> Limpiar
+          }
+        </mat-form-field>
+
+        <!-- Botones de acción -->
+        <div class="action-wrapper">
+          <button mat-raised-button color="primary" (click)="openAddMovementDialog()" class="action-btn">
+            <mat-icon>add</mat-icon> Nuevo Movimiento
+          </button>
+          <button mat-raised-button color="accent" (click)="loadAllMovements()" class="action-btn">
+            <mat-icon>refresh</mat-icon> Actualizar
           </button>
         </div>
       </div>
-    </form>
-  </mat-card-content>
-</mat-card>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+  <div class="loading-container">
+    <div class="custom-spinner"></div>
+    <p>Cargando movimientos...</p>
+  </div>
+  }
+
+  <!-- Table -->
+  @if (!isLoading() && filteredMovements().length > 0) {
+  <mat-card class="table-card">
+    <mat-card-content>
+      <table mat-table [dataSource]="filteredMovements()" class="movements-table">
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let movement">{{ formatDate(movement.movementDate) }}</td>
+        </ng-container>
+
+        <!-- Product Column -->
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef>Producto</th>
+          <td mat-cell *matCellDef="let movement">{{ getProductName(movement) }}</td>
+        </ng-container>
+
+        <!-- Type Column -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let movement">
+            @let typeInfo = getMovementTypeInfo(movement);
+            <span class="type-badge" [class]="'type-' + typeInfo.value.toLowerCase()">
+              <mat-icon>{{ typeInfo.icon }}</mat-icon>
+              {{ typeInfo.label }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Description Column -->
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Descripción</th>
+          <td mat-cell *matCellDef="let movement">{{ movement.description || 'N/A' }}</td>
+        </ng-container>
+
+        <!-- Quantity Column -->
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+          <td mat-cell *matCellDef="let movement">{{ movement.quantity }}</td>
+        </ng-container>
+
+        <!-- Details Column -->
+        <ng-container matColumnDef="details">
+          <th mat-header-cell *matHeaderCellDef>Detalles</th>
+          <td mat-cell *matCellDef="let movement">{{ getMovementDetails(movement) }}</td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let movement">
+            <button mat-icon-button color="warn" (click)="remove(movement)" matTooltip="Eliminar">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && filteredMovements().length === 0) {
+  <mat-card class="empty-card">
+    <mat-card-content>
+      <div class="empty-state">
+        <mat-icon>swap_horiz</mat-icon>
+        <h3>No hay movimientos registrados</h3>
+        @if (searchQuery()) {
+        <p>No hay resultados para "{{ searchQuery() }}"</p>
+        <button mat-button (click)="clearSearch()">Limpiar Búsqueda</button>
+        } @else {
+        <p>No hay movimientos disponibles</p>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+  }
+</div>

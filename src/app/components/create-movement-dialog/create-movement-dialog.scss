@@ -1,0 +1,112 @@
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 0;
+  min-width: 450px;
+  max-width: 600px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.section-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 14px;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f44336;
+  margin-top: 4px;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.radio-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #3f51b5;
+    background-color: rgba(63, 81, 181, 0.04);
+  }
+
+  &.mat-radio-checked {
+    border-color: #3f51b5;
+    background-color: rgba(63, 81, 181, 0.08);
+  }
+}
+
+.conditional-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+  border-left: 4px solid #3f51b5;
+}
+
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #3f51b5;
+}
+
+.custom-spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3f51b5;
+  border-radius: 50%;
+  animation: girar 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes girar {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// Mejoras visuales para inputs
+mat-form-field {
+  margin-bottom: 4px;
+}
+
+mat-hint {
+  font-size: 12px;
+}
+
+mat-error {
+  font-size: 12px;
+}
