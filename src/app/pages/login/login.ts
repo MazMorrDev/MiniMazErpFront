@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,7 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { LoginService } from '../../services/login.service';
 import { LoginRequest } from '../../interfaces/login/login-request.dto';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -21,13 +21,29 @@ import { Router } from '@angular/router';
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnInit {
+
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;
 
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly loginService = inject(LoginService);
+  private returnUrl: string = '/dashboard';
+
+  ngOnInit(): void {
+    // Verificar si ya está autenticado
+    if (this.loginService.isUserLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    // Obtener returnUrl de los query params
+    this.route.queryParams.subscribe(params => {
+      this.returnUrl = params['returnUrl'] || '/dashboard';
+    });
+  }
 
   onSubmit(): void {
     if (this.name && this.password) {

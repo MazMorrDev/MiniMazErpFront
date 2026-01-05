@@ -1,7 +1,9 @@
 @use '@angular/material' as mat;
 
 // Reset
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -9,14 +11,12 @@
 
 // Theme
 html {
-  @include mat.theme((
-    color: (
-      primary: mat.$rose-palette,
-      tertiary: mat.$red-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
+  @include mat.theme((color: (primary: mat.$rose-palette,
+        tertiary: mat.$red-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    ));
 }
 
 // Base
@@ -28,7 +28,7 @@ html {
 
 body {
   color-scheme: light;
-  background: var(--mat-sys-surface);
+  background: #f5f5f5;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
   min-height: 100vh;
