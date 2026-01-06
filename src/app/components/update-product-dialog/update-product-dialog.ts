@@ -8,8 +8,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductService } from '../../services/product.service';
-import { UpdateProductDto } from '../../interfaces/inventory/update-product.dto';
 import { Product } from '../../interfaces/inventory/product.dto';
+import { MatIconModule } from '@angular/material/icon'; // IMPORTANTE: Cambiado de MatIcon a MatIconModule
+
+// Definir la interfaz UpdateProductDto localmente si no existe
+interface UpdateProductDto {
+  name: string;
+  sellPrice?: number;
+}
 
 @Component({
   selector: 'app-update-product-dialog',
@@ -21,7 +27,8 @@ import { Product } from '../../interfaces/inventory/product.dto';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule
+    MatSelectModule,
+    MatIconModule, // IMPORTANTE: Usar MatIconModule en lugar de MatIcon
   ],
   templateUrl: './update-product-dialog.html',
   styleUrl: './update-product-dialog.scss',
@@ -33,11 +40,34 @@ export class UpdateProductDialog {
   private snackBar = inject(MatSnackBar);
 
   form: FormGroup;
+  selectedProduct: Product | null = null;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
     this.form = this.fb.group({
       productId: [null, [Validators.required]],
+      name: ['', [Validators.required, Validators.maxLength(40)]],
       sellPrice: [null, [Validators.min(0)]]
+    });
+
+    // Escuchar cambios en la selección del producto
+    this.form.get('productId')?.valueChanges.subscribe(productId => {
+      if (productId) {
+        const product = this.data.products.find(p => p.id === productId);
+        if (product) {
+          this.selectedProduct = product;
+          // Actualizar los campos con los valores del producto seleccionado
+          this.form.patchValue({
+            name: product.name,
+            sellPrice: product.sellPrice || null
+          }, { emitEvent: false });
+        }
+      } else {
+        this.selectedProduct = null;
+        this.form.patchValue({
+          name: '',
+          sellPrice: null
+        }, { emitEvent: false });
+      }
     });
   }
 
@@ -75,7 +105,6 @@ export class UpdateProductDialog {
         this.dialogRef.close(true);
       },
       error: (error) => {
-        console.error('Error actualizando producto:', error);
         this.snackBar.open('Error actualizando producto. Por favor intente nuevamente.', 'Cerrar', {
           duration: 3000
         });

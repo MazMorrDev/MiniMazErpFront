@@ -62,7 +62,7 @@
         <h4 class="section-title">Información del Nuevo Producto</h4>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nombre del Producto *</mat-label>
+          <mat-label>Nombre del Producto</mat-label>
           <input matInput [formControl]="newProductNameControl" placeholder="Ej: Laptop HP 15.6''">
           <mat-hint>Ingrese el nombre del producto (máx. 40 caracteres)</mat-hint>
           @if (newProductNameControl.hasError('required') && newProductNameControl.touched) {
@@ -208,7 +208,7 @@
       <h4 class="section-title">Información de Gasto</h4>
       <div class="form-section">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Tipo de Gasto *</mat-label>
+          <mat-label>Tipo de Gasto</mat-label>
           <mat-select formControlName="expenseType">
             @for (expType of expenseTypes; track expType.value) {
             <mat-option [value]="expType.value">{{ expType.label }}</mat-option>
