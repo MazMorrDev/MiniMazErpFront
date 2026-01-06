@@ -23,12 +23,13 @@
       <!-- Para COMPRAS: Toggle entre producto existente o nuevo -->
       <div class="product-toggle-section">
         <mat-label class="section-label">Selección de Producto</mat-label>
-        <mat-button-toggle-group formControlName="productOption" class="toggle-group" 
-                                 (change)="onProductOptionChange($event)">
-          <mat-button-toggle value="EXISTING" class="toggle-button">
+        <mat-button-toggle-group formControlName="productOption" class="toggle-group"
+          (change)="onProductOptionChange($event)" style="margin-bottom: 12px; display: flex;
+          justify-content: center;">
+          <mat-button-toggle value="EXISTING" class="toggle-button" style="width: 100%;">
             <mat-icon>inventory_2</mat-icon> Producto Existente
           </mat-button-toggle>
-          <mat-button-toggle value="NEW" class="toggle-button">
+          <mat-button-toggle value="NEW" class="toggle-button" style="width: 100%;">
             <mat-icon>add_circle</mat-icon> Nuevo Producto
           </mat-button-toggle>
         </mat-button-toggle-group>
@@ -38,7 +39,7 @@
       @if (form.get('productOption')?.value === 'EXISTING') {
       <div class="existing-product-section">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Seleccionar Producto *</mat-label>
+          <mat-label>Seleccionar Producto</mat-label>
           <mat-select formControlName="productId">
             <mat-option [value]="null">-- Seleccionar Producto Existente --</mat-option>
             @for (product of data.products; track product.id) {
@@ -59,7 +60,7 @@
       @if (form.get('productOption')?.value === 'NEW') {
       <div class="new-product-section">
         <h4 class="section-title">Información del Nuevo Producto</h4>
-        
+
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nombre del Producto *</mat-label>
           <input matInput [formControl]="newProductNameControl" placeholder="Ej: Laptop HP 15.6''">
@@ -74,8 +75,8 @@
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Precio de Venta Sugerido (opcional)</mat-label>
-          <input matInput type="number" min="0" step="0.01" [formControl]="newProductSellPriceControl" 
-                 placeholder="Ej: 599.99">
+          <input matInput type="number" min="0" step="0.01" [formControl]="newProductSellPriceControl"
+            placeholder="Ej: 599.99">
           <span matTextPrefix>$&nbsp;</span>
           <mat-hint>Precio sugerido para futuras ventas</mat-hint>
           @if (newProductSellPriceControl.hasError('min')) {
@@ -87,7 +88,7 @@
       } @else {
       <!-- Para VENTAS y GASTOS: Solo producto existente -->
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Producto *</mat-label>
+        <mat-label>Producto</mat-label>
         <mat-select formControlName="productId">
           <mat-option [value]="null">-- Seleccionar Producto --</mat-option>
           @for (product of data.products; track product.id) {
@@ -117,7 +118,7 @@
     <!-- Cantidad -->
     <div class="form-section">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Cantidad *</mat-label>
+        <mat-label>Cantidad</mat-label>
         <input matInput type="number" min="1" step="1" formControlName="quantity" placeholder="Ej: 10">
         <mat-hint>Número entero mayor a 0</mat-hint>
         @if (form.get('quantity')?.hasError('required') && form.get('quantity')?.touched) {
@@ -132,7 +133,7 @@
     <!-- Fecha -->
     <div class="form-section">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Fecha del Movimiento *</mat-label>
+        <mat-label>Fecha del Movimiento</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="movementDate" placeholder="Seleccione una fecha">
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
@@ -149,7 +150,7 @@
       <h4 class="section-title">Información de Compra</h4>
       <div class="form-section">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Precio Unitario ($) *</mat-label>
+          <mat-label>Precio Unitario ($)</mat-label>
           <input matInput type="number" min="0" step="0.01" formControlName="unitPrice" placeholder="Ej: 15.99">
           <span matTextPrefix>$&nbsp;</span>
           <mat-hint>Número decimal (2 decimales)</mat-hint>
@@ -170,7 +171,7 @@
       <h4 class="section-title">Información de Venta</h4>
       <div class="form-section">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Precio de Venta ($) *</mat-label>
+          <mat-label>Precio de Venta ($)</mat-label>
           <input matInput type="number" min="0" step="0.01" formControlName="salePrice" placeholder="Ej: 29.99">
           <span matTextPrefix>$&nbsp;</span>
           <mat-hint>Número decimal (2 decimales)</mat-hint>
@@ -241,10 +242,10 @@
 <mat-dialog-actions align="end">
   <button mat-button (click)="onCancel()">Cancelar</button>
   <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!isFormValid() || isLoading()">
+    <mat-icon>save</mat-icon> Guardar
+
     @if (isLoading()) {
     <div class="custom-spinner-small"></div>
-    } @else {
-    <mat-icon>save</mat-icon> Guardar
     }
   </button>
 </mat-dialog-actions>

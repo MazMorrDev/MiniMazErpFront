@@ -26,12 +26,11 @@
       <!-- Name Field -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Nombre</mat-label>
-        <input matInput [(ngModel)]="name" name="name" type="text" 
-          placeholder="Ej: Marco Antonio" required
+        <input matInput [(ngModel)]="name" name="name" type="text" placeholder="Ej: Marco Antonio" required
           [disabled]="isLoading" #nameInput="ngModel">
         <mat-icon matSuffix>person</mat-icon>
         <mat-hint>Ingresa tu nombre</mat-hint>
-        
+
         @if (nameInput.invalid && nameInput.touched) {
         <mat-error>
           Por favor ingresa un nombre válido
@@ -42,23 +41,18 @@
       <!-- Password Field -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Contraseña</mat-label>
-        <input matInput [(ngModel)]="password" name="password" 
-          [type]="hidePassword ? 'password' : 'text'"
-          placeholder="Mínimo 6 caracteres" minlength="6" required 
-          [disabled]="isLoading" #passwordInput="ngModel">
-        
+        <input matInput [(ngModel)]="password" name="password" [type]="hidePassword ? 'password' : 'text'"
+          placeholder="Mínimo 6 caracteres" minlength="6" required [disabled]="isLoading" #passwordInput="ngModel">
+
         <mat-hint>Ingresa tu contraseña</mat-hint>
-        
-        <button mat-icon-button matSuffix type="button" 
-          (click)="hidePassword = !hidePassword"
-          [attr.aria-label]="'Mostrar contraseña'"
-          [attr.aria-pressed]="hidePassword"
-          [disabled]="isLoading">
+
+        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+          [attr.aria-label]="'Mostrar contraseña'" [attr.aria-pressed]="hidePassword" [disabled]="isLoading">
           <mat-icon>
             {{ hidePassword ? 'visibility_off' : 'visibility' }}
           </mat-icon>
         </button>
-        
+
         @if (passwordInput.errors?.['required'] && passwordInput.touched) {
         <mat-error>
           La contraseña es requerida
@@ -72,14 +66,14 @@
       </mat-form-field>
 
       <!-- Submit Button -->
-      <button mat-raised-button color="primary" type="submit" 
-        class="login-button"
+      <button mat-raised-button color="primary" type="submit" class="login-button"
         [disabled]="!name || !password || password.length < 6 || isLoading">
+        <mat-icon class="login-icon">lock_open</mat-icon>
+        
         @if (isLoading) {
         <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
         <span class="loading-text">Iniciando Sesión...</span>
         } @else {
-        <mat-icon class="login-icon">lock_open</mat-icon>
         <span>Iniciar Sesión</span>
         }
       </button>
