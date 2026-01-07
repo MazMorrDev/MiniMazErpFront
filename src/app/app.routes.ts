@@ -1,16 +1,62 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
+  // Rutas públicas
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('./pages/register/register').then((m) => m.Register)
+  },
+
+  // Rutas principales protegidas
   {
     path: '',
-    loadComponent: () => import('./pages/products-page/products_page.component').then(m => m.ProductsPageComponent)
+    canActivate: [authGuard],
+    children: [
+      // Dashboard - Página principal
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+        data: { title: 'Dashboard' }
+      },
+
+      // Inventory - Gestión de inventario
+      {
+        path: 'inventory',
+        loadComponent: () => import('./pages/inventory/inventory').then((m) => m.Inventory),
+        data: { title: 'Inventory' }
+      },
+
+      // Movements - Movimientos (compras, ventas, gastos)
+      {
+        path: 'movements',
+        loadComponent: () => import('./pages/movements/movements').then((m) => m.Movements),
+        data: { title: 'Movements' }
+      },
+
+      // Redirección por defecto cuando se accede a la raíz
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      }
+    ]
   },
+
+  // Redirecciones globales
   {
-    path: 'mov-inv',
-    loadComponent: () => import('./pages/movimientos-inventario-page/mov_inv_page.component').then(m => m.MovInvPageComponent)
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'dashboard'
   },
+
+  // Ruta comodín (404) - redirige al dashboard
   {
     path: '**',
-    redirectTo: ''
+    redirectTo: 'dashboard'
   }
 ];

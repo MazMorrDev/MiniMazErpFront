@@ -1,0 +1,495 @@
+import { Component, Inject, inject, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatRadioModule, MatRadioChange } from '@angular/material/radio';
+import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/button-toggle';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { BuyService } from '../../services/buy.service';
+import { SellService } from '../../services/sell.service';
+import { ExpenseService } from '../../services/expense.service';
+import { ProductService } from '../../services/product.service';
+import { Product } from '../../interfaces/inventory/product.dto';
+import { ExpenseType } from '../../enums/expense-type.enum';
+import { CreateBuyDto } from '../../interfaces/movements/create-buy.dto';
+import { CreateSellDto } from '../../interfaces/movements/create-sell.dto';
+import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto';
+import { CreateProductDto } from '../../interfaces/inventory/create-product.dto';
+import { catchError, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+
+type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
+type ProductOption = 'EXISTING' | 'NEW';
+
+@Component({
+  selector: 'app-movement-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatRadioModule,
+    MatButtonToggleModule  // ¡AÑADIDO!
+  ],
+  templateUrl: './create-movement-dialog.html',
+  styleUrls: ['./create-movement-dialog.scss']
+})
+export class CreateMovementDialog implements OnInit {
+  private fb = inject(FormBuilder);
+  private buyService = inject(BuyService);
+  private sellService = inject(SellService);
+  private expenseService = inject(ExpenseService);
+  private productService = inject(ProductService);
+  private snackBar = inject(MatSnackBar);
+  private dialogRef = inject(MatDialogRef<CreateMovementDialog>);
+
+  isLoading = signal(false);
+  form!: FormGroup;
+  
+  // Controles para nuevo producto
+  newProductNameControl = new FormControl('', [Validators.required, Validators.maxLength(40)]);
+  newProductSellPriceControl = new FormControl(null as number | null, [Validators.min(0)]);
+
+  movementTypes = [
+    { value: 'BUY' as MovementType, label: 'Compra', icon: 'shopping_cart' },
+    { value: 'SELL' as MovementType, label: 'Venta', icon: 'point_of_sale' },
+    { value: 'EXPENSE' as MovementType, label: 'Gasto', icon: 'payments' }
+  ];
+
+  expenseTypes = [
+    { value: ExpenseType.RENT, label: 'Alquiler' },
+    { value: ExpenseType.UTILITIES, label: 'Servicios' },
+    { value: ExpenseType.SALARIES, label: 'Sueldos' },
+    { value: ExpenseType.MAINTENANCE, label: 'Mantenimiento' },
+    { value: ExpenseType.OTHER, label: 'Otros' }
+  ];
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
+    this.initializeForm();
+  }
+
+  ngOnInit() {
+    this.initializeFormListeners();
+  }
+
+  initializeForm() {
+    this.form = this.fb.group({
+      movementType: ['BUY', [Validators.required]],
+      productOption: ['EXISTING' as ProductOption], // Nuevo campo para toggle
+      inventoryId: [1, [Validators.required, Validators.min(1)]],
+      productId: [null, []], // Ahora con validación condicional
+      description: ['', [Validators.maxLength(255)]],
+      quantity: [1, [Validators.required, Validators.min(1)]],
+      movementDate: [new Date(), [Validators.required]],
+
+      // Campos condicionales
+      unitPrice: [{ value: 0, disabled: false }, [Validators.required, Validators.min(0)]],
+      expenseType: [{ value: ExpenseType.OTHER, disabled: true }, [Validators.required]],
+      totalPrice: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
+      salePrice: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
+      discountPercentage: [{ value: 0, disabled: true }, [Validators.min(0), Validators.max(100)]]
+    });
+
+    this.updateFormControlsState('BUY');
+    this.updateProductValidators('BUY', 'EXISTING');
+  }
+
+  initializeFormListeners() {
+    // Escuchar cambios en el tipo de movimiento
+    this.form.get('movementType')?.valueChanges.subscribe((type: MovementType) => {
+      if (type) {
+        this.updateFormControlsState(type);
+        this.updateValidators(type);
+        const productOption = type === 'BUY' ? this.form.get('productOption')?.value : 'EXISTING';
+        this.updateProductValidators(type, productOption);
+      }
+    });
+
+    // Escuchar cambios en la opción de producto (solo para BUY)
+    this.form.get('productOption')?.valueChanges.subscribe((option: ProductOption) => {
+      const movementType = this.form.get('movementType')?.value;
+      if (movementType === 'BUY') {
+        this.updateProductValidators(movementType, option);
+        // Limpiar valores cuando se cambia la opción
+        if (option === 'NEW') {
+          this.form.get('productId')?.setValue(null);
+          this.newProductNameControl.setValue('');
+          this.newProductSellPriceControl.setValue(null);
+        } else {
+          this.newProductNameControl.setValue('');
+          this.newProductSellPriceControl.setValue(null);
+        }
+      }
+    });
+
+    this.form.updateValueAndValidity();
+  }
+
+  onMovementTypeChange(event: MatRadioChange) {
+    const movementType = event.value as MovementType;
+    this.updateFormControlsState(movementType);
+    this.updateValidators(movementType);
+    const productOption = movementType === 'BUY' ? this.form.get('productOption')?.value : 'EXISTING';
+    this.updateProductValidators(movementType, productOption);
+  }
+
+  onProductOptionChange(event: MatButtonToggleChange) {
+    const productOption = event.value as ProductOption;
+    const movementType = this.form.get('movementType')?.value;
+    this.updateProductValidators(movementType, productOption);
+    
+    // Limpiar valores al cambiar opción
+    if (productOption === 'NEW') {
+      this.form.get('productId')?.setValue(null);
+      this.newProductNameControl.setValue('');
+      this.newProductSellPriceControl.setValue(null);
+    } else {
+      this.newProductNameControl.setValue('');
+      this.newProductSellPriceControl.setValue(null);
+    }
+  }
+
+  updateFormControlsState(movementType: MovementType) {
+    const controls = ['unitPrice', 'expenseType', 'totalPrice', 'salePrice', 'discountPercentage'];
+
+    controls.forEach(control => {
+      const formControl = this.form.get(control);
+      if (formControl) {
+        formControl.disable();
+      }
+    });
+
+    switch (movementType) {
+      case 'BUY':
+        this.form.get('unitPrice')?.enable();
+        break;
+      case 'SELL':
+        this.form.get('salePrice')?.enable();
+        this.form.get('discountPercentage')?.enable();
+        break;
+      case 'EXPENSE':
+        this.form.get('expenseType')?.enable();
+        this.form.get('totalPrice')?.enable();
+        break;
+    }
+  }
+
+  updateValidators(movementType: MovementType) {
+    const conditionalControls = ['unitPrice', 'expenseType', 'totalPrice', 'salePrice', 'discountPercentage'];
+
+    conditionalControls.forEach(control => {
+      const formControl = this.form.get(control);
+      if (formControl) {
+        formControl.clearValidators();
+        formControl.setValue(0);
+        if (control === 'expenseType') {
+          formControl.setValue(ExpenseType.OTHER);
+        }
+      }
+    });
+
+    switch (movementType) {
+      case 'BUY':
+        this.form.get('unitPrice')?.setValidators([Validators.required, Validators.min(0)]);
+        break;
+      case 'SELL':
+        this.form.get('salePrice')?.setValidators([Validators.required, Validators.min(0)]);
+        this.form.get('discountPercentage')?.setValidators([Validators.min(0), Validators.max(100)]);
+        break;
+      case 'EXPENSE':
+        this.form.get('expenseType')?.setValidators([Validators.required]);
+        this.form.get('totalPrice')?.setValidators([Validators.required, Validators.min(0)]);
+        break;
+    }
+
+    conditionalControls.forEach(control => {
+      this.form.get(control)?.updateValueAndValidity();
+    });
+
+    this.form.updateValueAndValidity();
+  }
+
+  updateProductValidators(movementType: MovementType, productOption: ProductOption = 'EXISTING') {
+    const productControl = this.form.get('productId');
+    
+    if (movementType === 'BUY') {
+      if (productOption === 'EXISTING') {
+        // Para producto existente en compras: requerido
+        productControl?.setValidators([Validators.required]);
+        productControl?.enable();
+      } else {
+        // Para producto nuevo en compras: no requerido
+        productControl?.clearValidators();
+        productControl?.setValue(null);
+        productControl?.disable();
+      }
+    } else {
+      // Para ventas y gastos: siempre requerido
+      productControl?.setValidators([Validators.required]);
+      productControl?.enable();
+    }
+    
+    productControl?.updateValueAndValidity();
+  }
+
+  isFormValid(): boolean {
+    const movementType = this.form.get('movementType')?.value;
+    const productOption = this.form.get('productOption')?.value;
+    
+    if (this.form.invalid) {
+      return false;
+    }
+
+    // Validación especial para compras con producto nuevo
+    if (movementType === 'BUY' && productOption === 'NEW') {
+      return this.newProductNameControl.valid;
+    }
+
+    return true;
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onSubmit(): void {
+    // Marcar todos los campos como tocados
+    this.markAllAsTouched();
+
+    if (!this.isFormValid()) {
+      const errors = this.getFormErrors();
+      this.snackBar.open(
+        `Por favor complete los campos requeridos: ${errors.join(', ')}`,
+        'Cerrar',
+        { duration: 5000 }
+      );
+      return;
+    }
+
+    const formValue = this.form.getRawValue();
+    const movementType = formValue.movementType as MovementType;
+
+    this.isLoading.set(true);
+
+    try {
+      this.processMovement(movementType, formValue);
+    } catch (error) {
+      this.handleError('Error inesperado al procesar la solicitud', error);
+    }
+  }
+
+  private markAllAsTouched(): void {
+    Object.keys(this.form.controls).forEach(key => {
+      const control = this.form.get(key);
+      control?.markAsTouched();
+    });
+    
+    this.newProductNameControl.markAsTouched();
+    this.newProductSellPriceControl.markAsTouched();
+  }
+
+  private processMovement(movementType: MovementType, formValue: any): void {
+    const movementDate = new Date(formValue.movementDate).toISOString();
+    const productOption = formValue.productOption as ProductOption;
+    
+    if (movementType === 'BUY' && productOption === 'NEW') {
+      // Crear producto nuevo antes de la compra
+      this.createProductAndThenBuy(formValue, movementDate);
+    } else {
+      // Usar producto existente
+      const productId = formValue.productId;
+      if (!productId) {
+        this.snackBar.open('Debe seleccionar un producto', 'Cerrar', { duration: 3000 });
+        this.isLoading.set(false);
+        return;
+      }
+      this.executeMovement(movementType, formValue, productId, movementDate);
+    }
+  }
+
+  private createProductAndThenBuy(formValue: any, movementDate: string): void {
+    const createProductDto: CreateProductDto = {
+      name: this.newProductNameControl.value || '',
+      sellPrice: this.newProductSellPriceControl.value || undefined
+    };
+
+    this.productService.create(createProductDto).pipe(
+      switchMap((newProduct: Product) => {
+        const buyDto: CreateBuyDto = {
+          inventoryId: formValue.inventoryId,
+          productId: newProduct.id,
+          quantity: formValue.quantity,
+          description: formValue.description || '',
+          movementDate: movementDate,
+          unitPrice: formValue.unitPrice
+        };
+
+        return this.buyService.create(buyDto);
+      }),
+      catchError(error => {
+        this.handleError('Error al crear producto o compra', error);
+        return of(null);
+      })
+    ).subscribe({
+      next: (result) => {
+        if (result) {
+          this.handleSuccess();
+        }
+      },
+      error: (error) => this.handleError('Error en el proceso', error)
+    });
+  }
+
+  private executeMovement(movementType: MovementType, formValue: any, productId: number, movementDate: string): void {
+    switch (movementType) {
+      case 'BUY':
+        const buyDto: CreateBuyDto = {
+          inventoryId: formValue.inventoryId,
+          productId: productId,
+          quantity: formValue.quantity,
+          description: formValue.description || '',
+          movementDate: movementDate,
+          unitPrice: formValue.unitPrice
+        };
+
+        this.buyService.create(buyDto).subscribe({
+          next: () => this.handleSuccess(),
+          error: (error) => this.handleError('Error al crear compra', error)
+        });
+        break;
+
+      case 'SELL':
+        const sellDto: CreateSellDto = {
+          inventoryId: formValue.inventoryId,
+          productId: productId,
+          quantity: formValue.quantity,
+          description: formValue.description || '',
+          movementDate: movementDate,
+          salePrice: formValue.salePrice,
+          discountPercentage: formValue.discountPercentage || undefined
+        };
+
+        this.sellService.create(sellDto).subscribe({
+          next: () => this.handleSuccess(),
+          error: (error) => this.handleError('Error al crear venta', error)
+        });
+        break;
+
+      case 'EXPENSE':
+        const expenseDto: CreateExpenseDto = {
+          inventoryId: formValue.inventoryId,
+          productId: productId,
+          quantity: formValue.quantity,
+          description: formValue.description || '',
+          movementDate: movementDate,
+          totalPrice: formValue.totalPrice,
+          expenseType: formValue.expenseType
+        };
+
+        this.expenseService.create(expenseDto).subscribe({
+          next: () => this.handleSuccess(),
+          error: (error) => this.handleError('Error al crear gasto', error)
+        });
+        break;
+
+      default:
+        this.snackBar.open('Tipo de movimiento no válido', 'Cerrar', { duration: 3000 });
+        this.isLoading.set(false);
+        break;
+    }
+  }
+
+  private getFormErrors(): string[] {
+    const errors: string[] = [];
+    const movementType = this.form.get('movementType')?.value;
+    const productOption = this.form.get('productOption')?.value;
+
+    // Errores del formulario principal
+    Object.keys(this.form.controls).forEach(key => {
+      const control = this.form.get(key);
+      if (control?.errors && control.touched) {
+        if (control.errors['required']) {
+          // Solo incluir productId si es requerido según el contexto
+          if (key === 'productId') {
+            if (movementType === 'BUY' && productOption === 'EXISTING') {
+              errors.push('Producto');
+            } else if (movementType !== 'BUY') {
+              errors.push('Producto');
+            }
+          } else {
+            errors.push(this.getFieldLabel(key));
+          }
+        }
+      }
+    });
+
+    // Errores del producto nuevo (solo para compras con opción NEW)
+    if (movementType === 'BUY' && productOption === 'NEW') {
+      if (this.newProductNameControl.hasError('required') && this.newProductNameControl.touched) {
+        errors.push('Nombre del Producto');
+      }
+      if (this.newProductNameControl.hasError('maxlength')) {
+        errors.push('Nombre del Producto (máx. 40 caracteres)');
+      }
+    }
+
+    return errors;
+  }
+
+  private getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      movementType: 'Tipo de Movimiento',
+      inventoryId: 'ID de Inventario',
+      productId: 'Producto',
+      quantity: 'Cantidad',
+      movementDate: 'Fecha',
+      unitPrice: 'Precio Unitario',
+      expenseType: 'Tipo de Gasto',
+      totalPrice: 'Total Gasto',
+      salePrice: 'Precio de Venta'
+    };
+
+    return labels[fieldName] || fieldName;
+  }
+
+  private handleSuccess(): void {
+    this.isLoading.set(false);
+    this.snackBar.open('Movimiento creado exitosamente', 'Cerrar', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+    this.dialogRef.close(true);
+  }
+
+  private handleError(message: string, error: any): void {
+    console.error('Error:', error);
+    this.isLoading.set(false);
+
+    const errorMessage = error?.error?.message || message;
+    this.snackBar.open(errorMessage, 'Cerrar', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  getProductName(productId: number): string {
+    const product = this.data.products.find(p => p.id === productId);
+    return product ? product.name : 'Producto no encontrado';
+  }
+}

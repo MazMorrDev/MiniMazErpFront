@@ -1,0 +1,82 @@
+<!-- navbar.html -->
+<mat-toolbar class="navbar-toolbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <a routerLink="/dashboard" class="logo-container" matTooltip="Go to Home">
+      <div class="logo-icon">
+        <mat-icon>inventory</mat-icon>
+      </div>
+      <span class="logo-text">MazERP</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+      <button mat-button
+              routerLink="/dashboard"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="nav-button">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+      
+      <button mat-button
+              routerLink="/movements"
+              routerLinkActive="active"
+              class="nav-button">
+        <mat-icon>swap_horiz</mat-icon>
+        <span>Movements</span>
+      </button>
+      
+      <button mat-button
+              routerLink="/inventory"
+              routerLinkActive="active"
+              class="nav-button">
+        <mat-icon>inventory_2</mat-icon>
+        <span>Inventory</span>
+      </button>
+      
+    </nav>
+
+    <!-- Mobile Menu Toggle -->
+    <button mat-icon-button
+            class="mobile-menu-toggle"
+            (click)="toggleMenu()"
+            aria-label="Toggle menu">
+      <mat-icon>{{ isMenuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation -->
+  @if (isMenuOpen) {
+    <nav class="mobile-nav">
+      <button mat-button
+              routerLink="/dashboard"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="mobile-nav-button"
+              (click)="toggleMenu()">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+      
+      <button mat-button
+              routerLink="/movements"
+              routerLinkActive="active"
+              class="mobile-nav-button"
+              (click)="toggleMenu()">
+        <mat-icon>swap_horiz</mat-icon>
+        <span>Movements</span>
+      </button>
+      
+      <button mat-button
+              routerLink="/inventory"
+              routerLinkActive="active"
+              class="mobile-nav-button"
+              (click)="toggleMenu()">
+        <mat-icon>inventory_2</mat-icon>
+        <span>Products</span>
+      </button>
+    </nav>
+  }
+</mat-toolbar>
