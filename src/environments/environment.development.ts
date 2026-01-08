@@ -1,3 +1,3 @@
-export const environment: { url: string } = {
-  url: 'http://localhost:3000'
-};
+export enum EnvironmentDevelopment {
+  apiUrl = 'http://localhost:5100'
+}
