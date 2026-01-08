@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { RegisterRequest } from '../interfaces/register/register-request';
 import { ApiTokenResponse } from '../interfaces/login/token-response';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { EnvironmentDevelopment } from '../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root',

@@ -2,10 +2,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { LoginRequest } from '../interfaces/login/login-request.dto';
-import { Router } from '@angular/router';
+
 import { ApiTokenResponse } from '../interfaces/login/token-response';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { EnvironmentDevelopment } from '../../environments/environment.development';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRATION_KEY = 'token_expiration';
@@ -62,7 +63,6 @@ export class LoginService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_EXPIRATION_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
-    this.router.navigate(['/login']);
   }
 
   // Verificar token expirado

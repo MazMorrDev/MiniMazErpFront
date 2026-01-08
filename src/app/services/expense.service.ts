@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { EnvironmentDevelopment } from '../../environments/environment.development';
 import { Expense } from '../interfaces/movements/expense.dto';
 import { CreateExpenseDto } from '../interfaces/movements/create-expense.dto';
 import { UpdateExpenseDto } from '../interfaces/movements/update-expense.dto';

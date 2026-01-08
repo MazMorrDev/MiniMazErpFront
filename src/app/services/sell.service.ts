@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Sell } from '../interfaces/movements/sell.dto';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { EnvironmentDevelopment } from '../../environments/environment.development';
 import { CreateSellDto } from '../interfaces/movements/create-sell.dto';
 import { UpdateSellDto } from '../interfaces/movements/update-sell.dto';
 

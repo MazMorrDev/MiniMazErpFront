@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EnvironmentDevelopment } from '../environments/environment-development';
+import { EnvironmentDevelopment } from '../../environments/environment.development';
 import { Inventory } from '../interfaces/inventory/inventory.dto';
 import { CreateInventoryDto } from '../interfaces/inventory/create-inventory.dto';
 import { UpdateInventoryDto } from '../interfaces/inventory/update-inventory.dto';
