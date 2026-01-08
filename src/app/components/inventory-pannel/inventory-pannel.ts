@@ -36,20 +36,20 @@ import { UpdateProductDialog } from '../update-product-dialog/update-product-dia
 export class InventoryPannel implements OnInit {
   private inventoryService = inject(InventoryService);
   private dialog = inject(MatDialog);
-  
+
   inventories: Inventory[] = [];
   isLoading = false;
   searchQuery = '';
-  
+
   displayedColumns: string[] = ['id', 'productId', 'clientId', 'stock', 'alertStock', 'warningStock'];
-  
+
   ngOnInit(): void {
     this.loadInventories();
   }
-  
+
   loadInventories(): void {
     this.isLoading = true;
-    
+
     this.inventoryService.getAll().subscribe({
       next: (data) => {
         this.inventories = data;
@@ -61,36 +61,44 @@ export class InventoryPannel implements OnInit {
       }
     });
   }
-  
+
   get filteredInventories() {
     if (!this.searchQuery) return this.inventories;
-    
-    return this.inventories.filter(inventory => 
+
+    return this.inventories.filter(inventory =>
       inventory.id.toString().includes(this.searchQuery) ||
       inventory.productId.toString().includes(this.searchQuery) ||
       inventory.stock.toString().includes(this.searchQuery)
     );
   }
-  
+
   clearSearch(): void {
     this.searchQuery = '';
   }
-  
+
   getStockColor(stock: number): string {
     if (stock === 0) return 'warn';
     if (stock < 10) return 'accent';
     return 'primary';
   }
-  
+
   openAddProductDialog(): void {
+    // Extraer información de productos de los inventarios
+    // Esto depende de tu estructura de datos
+    const productsFromInventories = this.inventories.map(inv => ({
+      id: inv.productId,
+      name: `Product ${inv.productId}`, // Necesitarás el nombre real
+      sellPrice: null // Necesitarías tener esta información
+    }));
+
     const dialogRef = this.dialog.open(UpdateProductDialog, {
       width: '500px',
-      autoFocus: true
+      autoFocus: true,
+      data: { products: productsFromInventories }
     });
-    
+
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // Si se creó un producto, recargar la tabla
         this.loadInventories();
       }
     });

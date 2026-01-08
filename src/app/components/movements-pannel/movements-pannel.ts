@@ -21,8 +21,8 @@ import { Product } from '../../interfaces/inventory/product.dto';
 import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
 import { Expense } from '../../interfaces/movements/expense.dto';
-import { ExpenseType } from '../../enums/expense-type.enum';
 import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
+import { UpdateProductDialog } from '../update-product-dialog/update-product-dialog';
 
 type MovementUnion = Buy | Sell | Expense;
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
