@@ -364,7 +364,6 @@ export class CreateMovementDialog implements OnInit {
           switchMap((inventory: Inventory) => {
             const buyDto: CreateBuyDto = {
               inventoryId: inventory.id, // ✅ Usar el ID del inventario
-              productId: newProduct.id,
               quantity: formValue.quantity,
               description: formValue.description || '',
               movementDate: movementDate,
