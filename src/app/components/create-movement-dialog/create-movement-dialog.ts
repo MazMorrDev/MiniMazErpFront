@@ -23,10 +23,12 @@ import { CreateBuyDto } from '../../interfaces/movements/create-buy.dto';
 import { CreateSellDto } from '../../interfaces/movements/create-sell.dto';
 import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto';
 import { CreateProductDto } from '../../interfaces/inventory/create-product.dto';
-import { catchError, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
-import { Inventory } from '../../pages/inventory/inventory';
+import { Inventory } from '../../interfaces/inventory/inventory.dto';
+import { CreateInventoryDto } from '../../interfaces/inventory/create-inventory.dto';
+import { UpdateInventoryDto } from '../../interfaces/inventory/update-inventory.dto';
 
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 type ProductOption = 'EXISTING' | 'NEW';
@@ -353,24 +355,26 @@ export class CreateMovementDialog implements OnInit {
       sellPrice: this.newProductSellPriceControl.value || undefined
     };
 
-    // Crear el nuevo inventario en caso de que no exista y si existe actualizar los valores
-    var inventory = this.handleInventoryCreation();
-
     this.productService.create(createProductDto).pipe(
       switchMap((newProduct: Product) => {
-        const buyDto: CreateBuyDto = {
-          inventoryId: inventory.id,
-          productId: newProduct.id,
-          quantity: formValue.quantity,
-          description: formValue.description || '',
-          movementDate: movementDate,
-          unitPrice: formValue.unitPrice
-        };
+        // Buscar si ya existe inventario para este producto
+        return this.findOrCreateInventory(newProduct.id, formValue.quantity).pipe(
+          switchMap((inventory: Inventory) => {
+            const buyDto: CreateBuyDto = {
+              inventoryId: inventory.id, // ✅ Usar el ID del inventario
+              productId: newProduct.id,
+              quantity: formValue.quantity,
+              description: formValue.description || '',
+              movementDate: movementDate,
+              unitPrice: formValue.unitPrice
+            };
 
-        return this.buyService.create(buyDto);
+            return this.buyService.create(buyDto);
+          })
+        );
       }),
       catchError(error => {
-        this.handleError('Error al crear producto o compra', error);
+        this.handleError('Error al crear producto, inventario o compra', error);
         return of(null);
       })
     ).subscribe({
@@ -383,8 +387,43 @@ export class CreateMovementDialog implements OnInit {
     });
   }
 
-  private handleInventoryCreation(): Inventory {
-    throw new Error('Function not implemented.');
+  private findOrCreateInventory(productId: number, initialStock: number): Observable<Inventory> {
+    return this.inventoryService.getAll().pipe(
+      switchMap((inventories: Inventory[]) => {
+        // Buscar si ya existe inventario para este producto
+        const existingInventory = inventories.find(inv => inv.productId === productId);
+
+        if (existingInventory) {
+          // Si existe, actualizar el stock
+          const updateDto: UpdateInventoryDto = {
+            clientId: existingInventory.clientId, // Mantener el mismo clientId
+            productId: productId,
+            stock: existingInventory.stock + initialStock, // Sumar nuevo stock
+            alertStock: existingInventory.alertStock,
+            warningStock: existingInventory.warningStock
+          };
+
+          return this.inventoryService.update(existingInventory.id, updateDto).pipe(
+            map(() => existingInventory) // Retornar el inventario actualizado
+          );
+        } else {
+          // Si no existe, crear nuevo inventario
+          const createDto: CreateInventoryDto = {
+            clientId: 1, // ⚠️ Ajusta según tu lógica de cliente
+            productId: productId,
+            stock: initialStock,
+            alertStock: undefined, // Puedes definir valores por defecto
+            warningStock: undefined
+          };
+
+          return this.inventoryService.create(createDto);
+        }
+      }),
+      catchError(error => {
+        this.handleError('Error al gestionar inventario', error);
+        throw error; // Propagar el error
+      })
+    );
   }
 
   private executeMovement(movementType: MovementType, formValue: any, productId: number, movementDate: string): void {
