@@ -22,7 +22,6 @@ import { ExpenseService } from '../../services/expense.service';
 // Interfaz unificada para movimientos en el dashboard
 interface DashboardMovement {
   id: number;
-  productId: number;
   description: string;
   quantity: number;
   movementDate: string;
@@ -142,7 +141,6 @@ export class DashboardPage {
         const allMovements: DashboardMovement[] = [
           ...buys.map(buy => ({
             id: buy.id,
-            productId: buy.productId,
             description: buy.description || 'Compra',
             quantity: buy.quantity,
             movementDate: buy.movementDate,
@@ -150,7 +148,6 @@ export class DashboardPage {
           })),
           ...sells.map(sell => ({
             id: sell.id,
-            productId: sell.productId,
             description: sell.description || 'Venta',
             quantity: sell.quantity,
             movementDate: sell.movementDate,
@@ -158,7 +155,6 @@ export class DashboardPage {
           })),
           ...expenses.map(expense => ({
             id: expense.id,
-            productId: expense.productId,
             description: expense.description || 'Gasto',
             quantity: expense.quantity,
             movementDate: expense.movementDate,
