@@ -22,7 +22,7 @@ import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
 import { Expense } from '../../interfaces/movements/expense.dto';
 import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
-import { UpdateProductDialog } from '../update-product-dialog/update-product-dialog';
+import { InventoryService } from '../../services/inventory.service';
 
 type MovementUnion = Buy | Sell | Expense;
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
@@ -50,6 +50,7 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 export class MovementsPannel {
   private productService = inject(ProductService);
   private buyService = inject(BuyService);
+  private inventoryService = inject(InventoryService);
   private sellService = inject(SellService);
   private expenseService = inject(ExpenseService);
   private snackBar = inject(MatSnackBar);
@@ -80,19 +81,6 @@ export class MovementsPannel {
         const description = (movement.description || '').toLowerCase();
         const matchesSearch = productName.includes(query) || description.includes(query);
         if (!matchesSearch) return false;
-      }
-
-      // 2. Filtro por producto
-      if (filter.productId && movement.productId !== filter.productId) {
-        return false;
-      }
-
-      // 3. Filtro por tipo de movimiento
-      if (filter.movementType) {
-        const movementType = this.getMovementType(movement);
-        if (movementType !== filter.movementType) {
-          return false;
-        }
       }
 
       return true;
@@ -242,8 +230,15 @@ export class MovementsPannel {
   }
 
   getProductName(movement: MovementUnion): string {
-    const product = this.products().find(p => p.id === movement.productId);
-    return product?.name || 'N/A';
+    // Verifica si el movimiento tiene productId directo
+    const productId = (movement as any).productId;
+
+    if (productId) {
+      const product = this.products().find(p => p.id === productId);
+      return product?.name || `Producto ${productId}`;
+    }
+
+    return 'Sin producto';
   }
 
   formatDate(dateString: string): string {
@@ -274,6 +269,4 @@ export class MovementsPannel {
     }
     return `Cantidad: ${movement.quantity}`;
   }
-
-
 }
