@@ -17,7 +17,7 @@ export class SellService {
     return this.http.get<Sell[]>(`${this.apiUrl}/api/Sell`);
   }
 
-  getById(id: number): Observable<Sell> {
+  get(id: number): Observable<Sell> {
     return this.http.get<Sell>(`${this.apiUrl}/api/Sell/${id}`);
   }
 
