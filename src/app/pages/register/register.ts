@@ -32,7 +32,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class Register implements OnInit {
+export class RegisterPage implements OnInit {
   name: string = '';
   password: string = '';
   confirmPassword: string = '';

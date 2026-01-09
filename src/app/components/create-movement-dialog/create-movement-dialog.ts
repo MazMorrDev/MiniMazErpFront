@@ -24,11 +24,12 @@ import { CreateSellDto } from '../../interfaces/movements/create-sell.dto';
 import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto';
 import { CreateProductDto } from '../../interfaces/inventory/create-product.dto';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
 import { Inventory } from '../../interfaces/inventory/inventory.dto';
 import { CreateInventoryDto } from '../../interfaces/inventory/create-inventory.dto';
 import { UpdateInventoryDto } from '../../interfaces/inventory/update-inventory.dto';
+import { LoginService } from '../../services/login.service';
 
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 type ProductOption = 'EXISTING' | 'NEW';
@@ -61,6 +62,7 @@ export class CreateMovementDialog implements OnInit {
   private expenseService = inject(ExpenseService);
   private productService = inject(ProductService);
   private inventoryService = inject(InventoryService)
+  private loginService = inject(LoginService);
   private snackBar = inject(MatSnackBar);
   private dialogRef = inject(MatDialogRef<CreateMovementDialog>);
 
@@ -388,31 +390,44 @@ export class CreateMovementDialog implements OnInit {
   }
 
   private findOrCreateInventory(productId: number, initialStock: number): Observable<Inventory> {
+    const clientId = this.loginService.getCurrentClientId();
+
+    // Validar cliente ANTES de hacer cualquier operación
+    if (!clientId) {
+      this.snackBar.open('Usuario no autenticado. Por favor, inicie sesión.', 'Cerrar', { duration: 3000 });
+      return throwError(() => new Error('Cliente no autenticado'));
+    }
+
     return this.inventoryService.getAll().pipe(
       switchMap((inventories: Inventory[]) => {
-        // Buscar si ya existe inventario para este producto
-        const existingInventory = inventories.find(inv => inv.productId === productId);
+        // Buscar inventario específico para este cliente y producto
+        const existingInventory = inventories.find(inv =>
+          inv.productId === productId && inv.clientId === clientId
+        );
 
         if (existingInventory) {
           // Si existe, actualizar el stock
           const updateDto: UpdateInventoryDto = {
-            clientId: existingInventory.clientId, // Mantener el mismo clientId
+            clientId: clientId,
             productId: productId,
-            stock: existingInventory.stock + initialStock, // Sumar nuevo stock
+            stock: existingInventory.stock + initialStock,
             alertStock: existingInventory.alertStock,
             warningStock: existingInventory.warningStock
           };
 
           return this.inventoryService.update(existingInventory.id, updateDto).pipe(
-            map(() => existingInventory) // Retornar el inventario actualizado
+            map(() => ({
+              ...existingInventory,
+              stock: existingInventory.stock + initialStock
+            }))
           );
         } else {
-          // Si no existe, crear nuevo inventario
+          // Crear nuevo inventario
           const createDto: CreateInventoryDto = {
-            clientId: 1, // ⚠️ Ajusta según tu lógica de cliente
+            clientId: clientId,
             productId: productId,
             stock: initialStock,
-            alertStock: undefined, // Puedes definir valores por defecto
+            alertStock: undefined,
             warningStock: undefined
           };
 
@@ -420,33 +435,63 @@ export class CreateMovementDialog implements OnInit {
         }
       }),
       catchError(error => {
+        // Manejar error específico de "no encontrado" vs otros errores
+        if (error.status === 404) {
+          // No hay inventarios aún (primer producto)
+          return this.createNewInventory(clientId, productId, initialStock);
+        }
+
         this.handleError('Error al gestionar inventario', error);
-        throw error; // Propagar el error
+        return throwError(() => error);
       })
     );
   }
 
+  // Método auxiliar para crear inventario nuevo
+  private createNewInventory(clientId: number, productId: number, stock: number): Observable<Inventory> {
+    const createDto: CreateInventoryDto = {
+      clientId: clientId,
+      productId: productId,
+      stock: stock,
+      alertStock: undefined,
+      warningStock: undefined
+    };
+
+    return this.inventoryService.create(createDto);
+  }
+
   private executeMovement(movementType: MovementType, formValue: any, productId: number, movementDate: string): void {
+    this.findOrCreateInventory(productId, formValue.quantity).pipe(
+      switchMap((inventory: Inventory) =>
+        this.createMovementDto(movementType, formValue, productId, movementDate, inventory.id)
+      ),
+      switchMap((dto: any) => this.callMovementService(movementType, dto))
+    ).subscribe({
+      next: () => this.handleSuccess(),
+      error: (error) => this.handleError('Error al crear movimiento', error)
+    });
+  }
+
+  private createMovementDto(
+    movementType: MovementType,
+    formValue: any,
+    productId: number,
+    movementDate: string,
+    inventoryId: number
+  ): any {
     switch (movementType) {
       case 'BUY':
-        const buyDto: CreateBuyDto = {
-          inventoryId: formValue.inventoryId,
+        return {
+          inventoryId: inventoryId,
           productId: productId,
           quantity: formValue.quantity,
           description: formValue.description || '',
           movementDate: movementDate,
           unitPrice: formValue.unitPrice
         };
-
-        this.buyService.create(buyDto).subscribe({
-          next: () => this.handleSuccess(),
-          error: (error) => this.handleError('Error al crear compra', error)
-        });
-        break;
-
       case 'SELL':
-        const sellDto: CreateSellDto = {
-          inventoryId: formValue.inventoryId,
+        return {
+          inventoryId: inventoryId,
           productId: productId,
           quantity: formValue.quantity,
           description: formValue.description || '',
@@ -454,16 +499,9 @@ export class CreateMovementDialog implements OnInit {
           salePrice: formValue.salePrice,
           discountPercentage: formValue.discountPercentage || undefined
         };
-
-        this.sellService.create(sellDto).subscribe({
-          next: () => this.handleSuccess(),
-          error: (error) => this.handleError('Error al crear venta', error)
-        });
-        break;
-
       case 'EXPENSE':
-        const expenseDto: CreateExpenseDto = {
-          inventoryId: formValue.inventoryId,
+        return {
+          inventoryId: inventoryId,
           productId: productId,
           quantity: formValue.quantity,
           description: formValue.description || '',
@@ -471,17 +509,21 @@ export class CreateMovementDialog implements OnInit {
           totalPrice: formValue.totalPrice,
           expenseType: formValue.expenseType
         };
-
-        this.expenseService.create(expenseDto).subscribe({
-          next: () => this.handleSuccess(),
-          error: (error) => this.handleError('Error al crear gasto', error)
-        });
-        break;
-
       default:
-        this.snackBar.open('Tipo de movimiento no válido', 'Cerrar', { duration: 3000 });
-        this.isLoading.set(false);
-        break;
+        throw new Error('Tipo de movimiento no válido');
+    }
+  }
+
+  private callMovementService(movementType: MovementType, dto: any): Observable<any> {
+    switch (movementType) {
+      case 'BUY':
+        return this.buyService.create(dto);
+      case 'SELL':
+        return this.sellService.create(dto);
+      case 'EXPENSE':
+        return this.expenseService.create(dto);
+      default:
+        return throwError(() => new Error('Tipo de movimiento no válido'));
     }
   }
 

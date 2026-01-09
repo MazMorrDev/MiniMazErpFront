@@ -5,11 +5,11 @@ export const routes: Routes = [
   // Rutas públicas
   {
     path: 'login',
-    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+    loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
   },
   {
     path: 'register',
-    loadComponent: () => import('./pages/register/register').then((m) => m.Register)
+    loadComponent: () => import('./pages/register/register').then((m) => m.RegisterPage)
   },
 
   // Rutas principales protegidas
@@ -20,21 +20,21 @@ export const routes: Routes = [
       // Dashboard - Página principal
       {
         path: 'dashboard',
-        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.DashboardPage),
         data: { title: 'Dashboard' }
       },
 
       // Inventory - Gestión de inventario
       {
         path: 'inventory',
-        loadComponent: () => import('./pages/inventory/inventory').then((m) => m.Inventory),
+        loadComponent: () => import('./pages/inventory/inventory').then((m) => m.InventoryPage),
         data: { title: 'Inventory' }
       },
 
       // Movements - Movimientos (compras, ventas, gastos)
       {
         path: 'movements',
-        loadComponent: () => import('./pages/movements/movements').then((m) => m.Movements),
+        loadComponent: () => import('./pages/movements/movements').then((m) => m.MovementsPage),
         data: { title: 'Movements' }
       },
 
