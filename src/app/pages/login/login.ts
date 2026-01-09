@@ -31,7 +31,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login implements OnInit, OnDestroy {
+export class LoginPage implements OnInit, OnDestroy {
   name: string = '';
   password: string = '';
   hidePassword: boolean = true;
@@ -123,7 +123,7 @@ export class Login implements OnInit, OnDestroy {
           this.isLoading = false; // Resetear loading antes de redirigir
           this.isLoading = true;
           this.router.navigateByUrl(this.returnUrl);
-        }, 100);
+        }, 1);
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false; // Resetear loading aquí también

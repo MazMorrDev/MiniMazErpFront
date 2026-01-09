@@ -1,4 +1,4 @@
-import { Component, Inject, inject, signal, OnInit } from '@angular/core';
+import { Component, Inject, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -25,6 +25,8 @@ import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto'
 import { CreateProductDto } from '../../interfaces/inventory/create-product.dto';
 import { catchError, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { InventoryService } from '../../services/inventory.service';
+import { Inventory } from '../../pages/inventory/inventory';
 
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 type ProductOption = 'EXISTING' | 'NEW';
@@ -45,7 +47,7 @@ type ProductOption = 'EXISTING' | 'NEW';
     MatDatepickerModule,
     MatNativeDateModule,
     MatRadioModule,
-    MatButtonToggleModule  // ¡AÑADIDO!
+    MatButtonToggleModule
   ],
   templateUrl: './create-movement-dialog.html',
   styleUrls: ['./create-movement-dialog.scss']
@@ -56,12 +58,29 @@ export class CreateMovementDialog implements OnInit {
   private sellService = inject(SellService);
   private expenseService = inject(ExpenseService);
   private productService = inject(ProductService);
+  private inventoryService = inject(InventoryService)
   private snackBar = inject(MatSnackBar);
   private dialogRef = inject(MatDialogRef<CreateMovementDialog>);
 
+  // Signals principales (estado)
   isLoading = signal(false);
+  products = signal<Product[]>([]);
+
+  // Signals para estado del formulario (KISS - solo lo necesario)
+  movementType = signal<MovementType>('BUY');
+  productOption = signal<ProductOption>('EXISTING');
+
+  // Signal para precio final (ejemplo de valor computado)
+  finalPrice = computed(() => {
+    if (this.movementType() !== 'SELL') return 0;
+
+    const salePrice = this.form.get('salePrice')?.value || 0;
+    const discount = this.form.get('discountPercentage')?.value || 0;
+    return salePrice - (salePrice * discount / 100);
+  });
+
   form!: FormGroup;
-  
+
   // Controles para nuevo producto
   newProductNameControl = new FormControl('', [Validators.required, Validators.maxLength(40)]);
   newProductSellPriceControl = new FormControl(null as number | null, [Validators.min(0)]);
@@ -81,19 +100,52 @@ export class CreateMovementDialog implements OnInit {
   ];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
-    this.initializeForm();
+    // Inicializar signals
+    this.products.set(data.products);
+
+    // Crear effect para reaccionar a cambios de movimientoType
+    effect(() => {
+      const type = this.movementType();
+      if (type) {
+        this.updateFormControlsState(type);
+        this.updateValidators(type);
+        const option = type === 'BUY' ? this.productOption() : 'EXISTING';
+        this.updateProductValidators(type, option);
+      }
+    });
+
+    // Effect para opción de producto
+    effect(() => {
+      const type = this.movementType();
+      const option = this.productOption();
+
+      if (type === 'BUY') {
+        this.updateProductValidators(type, option);
+
+        // Limpiar valores al cambiar opción
+        if (option === 'NEW') {
+          this.form.get('productId')?.setValue(null);
+          this.newProductNameControl.setValue('');
+          this.newProductSellPriceControl.setValue(null);
+        } else {
+          this.newProductNameControl.setValue('');
+          this.newProductSellPriceControl.setValue(null);
+        }
+      }
+    });
   }
 
   ngOnInit() {
+    this.initializeForm();
     this.initializeFormListeners();
   }
 
   initializeForm() {
     this.form = this.fb.group({
       movementType: ['BUY', [Validators.required]],
-      productOption: ['EXISTING' as ProductOption], // Nuevo campo para toggle
+      productOption: ['EXISTING' as ProductOption],
       inventoryId: [1, [Validators.required, Validators.min(1)]],
-      productId: [null, []], // Ahora con validación condicional
+      productId: [null, []],
       description: ['', [Validators.maxLength(255)]],
       quantity: [1, [Validators.required, Validators.min(1)]],
       movementDate: [new Date(), [Validators.required]],
@@ -106,36 +158,19 @@ export class CreateMovementDialog implements OnInit {
       discountPercentage: [{ value: 0, disabled: true }, [Validators.min(0), Validators.max(100)]]
     });
 
+    // Sincronizar signals iniciales con el formulario
     this.updateFormControlsState('BUY');
     this.updateProductValidators('BUY', 'EXISTING');
   }
 
   initializeFormListeners() {
-    // Escuchar cambios en el tipo de movimiento
+    // Escuchar cambios del formulario y actualizar signals
     this.form.get('movementType')?.valueChanges.subscribe((type: MovementType) => {
-      if (type) {
-        this.updateFormControlsState(type);
-        this.updateValidators(type);
-        const productOption = type === 'BUY' ? this.form.get('productOption')?.value : 'EXISTING';
-        this.updateProductValidators(type, productOption);
-      }
+      this.movementType.set(type);
     });
 
-    // Escuchar cambios en la opción de producto (solo para BUY)
     this.form.get('productOption')?.valueChanges.subscribe((option: ProductOption) => {
-      const movementType = this.form.get('movementType')?.value;
-      if (movementType === 'BUY') {
-        this.updateProductValidators(movementType, option);
-        // Limpiar valores cuando se cambia la opción
-        if (option === 'NEW') {
-          this.form.get('productId')?.setValue(null);
-          this.newProductNameControl.setValue('');
-          this.newProductSellPriceControl.setValue(null);
-        } else {
-          this.newProductNameControl.setValue('');
-          this.newProductSellPriceControl.setValue(null);
-        }
-      }
+      this.productOption.set(option);
     });
 
     this.form.updateValueAndValidity();
@@ -143,26 +178,14 @@ export class CreateMovementDialog implements OnInit {
 
   onMovementTypeChange(event: MatRadioChange) {
     const movementType = event.value as MovementType;
-    this.updateFormControlsState(movementType);
-    this.updateValidators(movementType);
-    const productOption = movementType === 'BUY' ? this.form.get('productOption')?.value : 'EXISTING';
-    this.updateProductValidators(movementType, productOption);
+    this.movementType.set(movementType);
+    this.form.get('movementType')?.setValue(movementType);
   }
 
   onProductOptionChange(event: MatButtonToggleChange) {
     const productOption = event.value as ProductOption;
-    const movementType = this.form.get('movementType')?.value;
-    this.updateProductValidators(movementType, productOption);
-    
-    // Limpiar valores al cambiar opción
-    if (productOption === 'NEW') {
-      this.form.get('productId')?.setValue(null);
-      this.newProductNameControl.setValue('');
-      this.newProductSellPriceControl.setValue(null);
-    } else {
-      this.newProductNameControl.setValue('');
-      this.newProductSellPriceControl.setValue(null);
-    }
+    this.productOption.set(productOption);
+    this.form.get('productOption')?.setValue(productOption);
   }
 
   updateFormControlsState(movementType: MovementType) {
@@ -227,7 +250,7 @@ export class CreateMovementDialog implements OnInit {
 
   updateProductValidators(movementType: MovementType, productOption: ProductOption = 'EXISTING') {
     const productControl = this.form.get('productId');
-    
+
     if (movementType === 'BUY') {
       if (productOption === 'EXISTING') {
         // Para producto existente en compras: requerido
@@ -244,14 +267,14 @@ export class CreateMovementDialog implements OnInit {
       productControl?.setValidators([Validators.required]);
       productControl?.enable();
     }
-    
+
     productControl?.updateValueAndValidity();
   }
 
   isFormValid(): boolean {
-    const movementType = this.form.get('movementType')?.value;
-    const productOption = this.form.get('productOption')?.value;
-    
+    const movementType = this.movementType();
+    const productOption = this.productOption();
+
     if (this.form.invalid) {
       return false;
     }
@@ -283,7 +306,7 @@ export class CreateMovementDialog implements OnInit {
     }
 
     const formValue = this.form.getRawValue();
-    const movementType = formValue.movementType as MovementType;
+    const movementType = this.movementType();
 
     this.isLoading.set(true);
 
@@ -299,17 +322,18 @@ export class CreateMovementDialog implements OnInit {
       const control = this.form.get(key);
       control?.markAsTouched();
     });
-    
+
     this.newProductNameControl.markAsTouched();
     this.newProductSellPriceControl.markAsTouched();
   }
 
   private processMovement(movementType: MovementType, formValue: any): void {
     const movementDate = new Date(formValue.movementDate).toISOString();
-    const productOption = formValue.productOption as ProductOption;
-    
+    const productOption = this.productOption();
+
     if (movementType === 'BUY' && productOption === 'NEW') {
       // Crear producto nuevo antes de la compra
+
       this.createProductAndThenBuy(formValue, movementDate);
     } else {
       // Usar producto existente
@@ -329,10 +353,13 @@ export class CreateMovementDialog implements OnInit {
       sellPrice: this.newProductSellPriceControl.value || undefined
     };
 
+    // Crear el nuevo inventario en caso de que no exista y si existe actualizar los valores
+    var inventory = this.handleInventoryCreation();
+
     this.productService.create(createProductDto).pipe(
       switchMap((newProduct: Product) => {
         const buyDto: CreateBuyDto = {
-          inventoryId: formValue.inventoryId,
+          inventoryId: inventory.id,
           productId: newProduct.id,
           quantity: formValue.quantity,
           description: formValue.description || '',
@@ -354,6 +381,10 @@ export class CreateMovementDialog implements OnInit {
       },
       error: (error) => this.handleError('Error en el proceso', error)
     });
+  }
+
+  private handleInventoryCreation(): Inventory {
+    throw new Error('Function not implemented.');
   }
 
   private executeMovement(movementType: MovementType, formValue: any, productId: number, movementDate: string): void {
@@ -417,8 +448,8 @@ export class CreateMovementDialog implements OnInit {
 
   private getFormErrors(): string[] {
     const errors: string[] = [];
-    const movementType = this.form.get('movementType')?.value;
-    const productOption = this.form.get('productOption')?.value;
+    const movementType = this.movementType();
+    const productOption = this.productOption();
 
     // Errores del formulario principal
     Object.keys(this.form.controls).forEach(key => {
@@ -489,7 +520,9 @@ export class CreateMovementDialog implements OnInit {
   }
 
   getProductName(productId: number): string {
-    const product = this.data.products.find(p => p.id === productId);
+    const product = this.products().find(p => p.id === productId);
     return product ? product.name : 'Producto no encontrado';
   }
 }
+
+

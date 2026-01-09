@@ -1,7 +1,7 @@
 export interface UpdateMovementDto {
-    inventoryId: number;        // AÑADIDO: requerido según C#
-    productId: number;          // AÑADIDO: era solo productId, pero también es requerido
-    quantity?: number;          // OPCIONAL: correcto para update
-    description?: string;       // OPCIONAL: correcto
-    movementDate?: string;      // OPCIONAL: ? añadido (en C# es requerido pero para update puede ser opcional)
+    inventoryId: number;    // Required en backend
+    productId: number;      // Required en backend
+    quantity?: number;
+    description?: string;
+    movementDate?: string;  // ISO 8601 string cuando se envía
 }

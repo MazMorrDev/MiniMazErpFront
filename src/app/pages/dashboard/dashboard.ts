@@ -48,7 +48,7 @@ interface DashboardMovement {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class Dashboard {
+export class DashboardPage {
   private productService = inject(ProductService);
   private buyService = inject(BuyService);
   private sellService = inject(SellService);
