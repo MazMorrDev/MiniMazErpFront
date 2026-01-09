@@ -7,6 +7,8 @@ import { EnvironmentDevelopment } from '../../environments/environment.developme
 
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRATION_KEY = 'token_expiration';
+const CLIENT_ID_KEY = 'client_id';
+const CLIENT_NAME_KEY = 'client_name';
 
 @Injectable({
   providedIn: 'root',
@@ -24,6 +26,12 @@ export class LoginService {
   saveToken(tokenResponse: ApiTokenResponse): void {
     localStorage.setItem(TOKEN_KEY, tokenResponse.token);
 
+    // Guardar datos del usuario
+    if (tokenResponse.user) {
+      localStorage.setItem(CLIENT_ID_KEY, tokenResponse.user.id.toString());
+      localStorage.setItem(CLIENT_NAME_KEY, tokenResponse.user.name);
+    }
+
     let expirationTime: number;
     if (tokenResponse.expiration) {
       const expirationDate = new Date(tokenResponse.expiration);
@@ -39,8 +47,19 @@ export class LoginService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
+  getCurrentClientName(): string | null {
+    return localStorage.getItem(CLIENT_NAME_KEY);
+  }
+
+  getCurrentClientId(): number | null {
+    const clientIdStr = localStorage.getItem(CLIENT_ID_KEY);
+    return clientIdStr ? parseInt(clientIdStr, 10) : null;
+  }
+
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CLIENT_ID_KEY);
+    localStorage.removeItem(CLIENT_NAME_KEY);
     localStorage.removeItem(TOKEN_EXPIRATION_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
     this.router.navigate(['/login']);
