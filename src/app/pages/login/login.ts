@@ -47,7 +47,6 @@ export class LoginPage implements OnInit, OnDestroy {
   private subscriptions: Subscription = new Subscription();
 
   ngOnInit(): void {
-    this.loginService.logout();
     // Limpiar mensajes previos
     this.clearMessages();
 
