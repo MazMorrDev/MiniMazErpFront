@@ -91,9 +91,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
 
-  // Debug signal
-  readonly debugData = signal<any>(null);
-
   // Constants
   readonly movementTypes: MovementTypeInfo[] = [
     { value: 'BUY', label: 'Compra', icon: 'shopping_cart' },
@@ -144,7 +141,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
       await this.loadAllMovements();
       
     } catch (error) {
-      console.error('Error en loadInitialData:', error);
       this.showErrorMessage('Error al cargar datos iniciales');
     } finally {
       this.isLoading.set(false);
@@ -157,12 +153,10 @@ export class MovementsPannel implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (products) => {
-            console.log('Productos cargados:', products.length, 'primer producto:', products[0]);
             this.products.set(products);
             resolve();
           },
           error: (error) => {
-            console.error('Error cargando productos:', error);
             this.showErrorMessage('Error al cargar productos');
             reject(error);
           }
@@ -176,12 +170,10 @@ export class MovementsPannel implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (inventories) => {
-            console.log('Inventarios cargados:', inventories.length, 'primer inventario:', inventories[0]);
             this.inventories.set(inventories);
             resolve();
           },
           error: (error) => {
-            console.error('Error cargando inventarios:', error);
             this.showErrorMessage('Error al cargar inventarios');
             reject(error);
           }
@@ -192,21 +184,11 @@ export class MovementsPannel implements OnInit, OnDestroy {
   async loadAllMovements(): Promise<void> {
     this.isLoading.set(true);
 
-    try {
-      console.log('=== INICIANDO CARGA DE MOVIMIENTOS ===');
-      
+    try {      
       // 1. Obtener TODOS los movements primero (tienen inventoryId)
       const allMovements = await lastValueFrom(
         this.movementsService.getAll().pipe(takeUntil(this.destroy$))
       );
-
-      console.log('Movements del MovementService:', allMovements?.length || 0);
-      
-      if (allMovements && allMovements.length > 0) {
-        console.log('Primer movement del MovementService:', allMovements[0]);
-        console.log('¿Tiene id?:', 'id' in allMovements[0], 'valor:', allMovements[0]?.id);
-        console.log('¿Tiene inventoryId?:', 'inventoryId' in allMovements[0], 'valor:', allMovements[0]?.inventoryId);
-      }
 
       // 2. Obtener buys, sells, expenses
       const [buys, sells, expenses] = await Promise.all([
@@ -214,10 +196,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
         lastValueFrom(this.sellService.getAll().pipe(takeUntil(this.destroy$))),
         lastValueFrom(this.expenseService.getAll().pipe(takeUntil(this.destroy$)))
       ]);
-
-      console.log('Buys recibidas:', buys?.length || 0);
-      console.log('Sells recibidas:', sells?.length || 0);
-      console.log('Expenses recibidas:', expenses?.length || 0);
 
       // 3. Crear mapa de movements por ID para acceso rápido
       const movementsMap = new Map<number, Movement>();
@@ -229,8 +207,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
         });
       }
 
-      console.log('Movements en mapa:', movementsMap.size);
-
       // 4. Función para enriquecer datos
       const enrichData = (items: any[], type: MovementType): EnrichedMovement[] => {
         if (!items || items.length === 0) return [];
@@ -238,12 +214,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
         return items.map(item => {
           const movementId = item.movementId || item.id;
           const movementData = movementsMap.get(movementId);
-          
-          // DEBUG: Ver qué estamos encontrando
-          if (!movementData) {
-            console.warn(`No se encontró movement para ${type} con ID:`, movementId);
-            console.warn('Item completo:', item);
-          }
 
           // Crear objeto enriquecido
           const enriched: EnrichedMovement = {
@@ -275,31 +245,11 @@ export class MovementsPannel implements OnInit, OnDestroy {
         ...enrichedExpenses
       ];
 
-      console.log('Total movimientos combinados:', combinedMovements.length);
-      
-      if (combinedMovements.length > 0) {
-        console.log('Primer movimiento enriquecido:', combinedMovements[0]);
-        console.log('¿Tiene id?:', 'id' in combinedMovements[0], 'valor:', combinedMovements[0].id);
-        console.log('¿Tiene inventoryId?:', 'inventoryId' in combinedMovements[0], 'valor:', combinedMovements[0].inventoryId);
-        console.log('¿Tiene _type?:', '_type' in combinedMovements[0], 'valor:', combinedMovements[0]._type);
-      }
-
-      // 7. Guardar para debug
-      this.debugData.set({
-        rawMovements: allMovements,
-        rawBuys: buys,
-        rawSells: sells,
-        rawExpenses: expenses,
-        enrichedMovements: combinedMovements,
-        movementsMapSize: movementsMap.size
-      });
-
       // 8. Ordenar y guardar
       this.sortMovementsByDate(combinedMovements);
       this.allMovements.set(combinedMovements);
 
     } catch (error) {
-      console.error('Error detallado cargando movimientos:', error);
       this.showErrorMessage('Error al cargar movimientos');
     } finally {
       this.isLoading.set(false);
@@ -374,7 +324,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
   }
 
   private handleError(message: string, error: any): void {
-    console.error(message, error);
     const errorDetail = error?.error?.message || error?.message || 'Error desconocido';
     this.showErrorMessage(`${message}: ${errorDetail}`);
   }
@@ -405,7 +354,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
 
     // Verificar que tenemos inventoryId
     if (typeof movement.inventoryId === 'undefined') {
-      console.warn('Movimiento sin inventoryId:', movement);
       return 'Sin inventario';
     }
 
@@ -420,14 +368,12 @@ export class MovementsPannel implements OnInit, OnDestroy {
     const inventory = inventories.find(inv => inv.id === movement.inventoryId);
     
     if (!inventory) {
-      console.warn(`Inventario ${movement.inventoryId} no encontrado para movimiento ${movement.id}`);
       return `Inv#${movement.inventoryId}`;
     }
 
     const product = products.find(p => p.id === inventory.productId);
     
     if (!product) {
-      console.warn(`Producto ${inventory.productId} no encontrado para inventario ${inventory.id}`);
       return `Prod#${inventory.productId}`;
     }
 
@@ -446,7 +392,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
         minute: '2-digit'
       });
     } catch (error) {
-      console.error('Error formateando fecha:', dateString, error);
       return dateString;
     }
   }
@@ -500,29 +445,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
     this.snackBar.open(message, 'Cerrar', {
       duration: 3000,
       panelClass: ['warning-snackbar']
-    });
-  }
-
-  // --- DEBUG METHOD ---
-  showDebugInfo(): void {
-    const debug = this.debugData();
-    console.log('=== DEBUG INFO ===');
-    console.log('Debug data:', debug);
-    console.log('Products signal:', this.products());
-    console.log('Inventories signal:', this.inventories());
-    console.log('Movements signal:', this.allMovements());
-    
-    // Probar el MovementService directamente
-    this.movementsService.getAll().subscribe({
-      next: (movements) => {
-        console.log('✅ MovementService funciona! Movimientos:', movements.length);
-        if (movements.length > 0) {
-          console.log('Primer movimiento:', movements[0]);
-        }
-      },
-      error: (error) => {
-        console.error('❌ Error en MovementService:', error);
-      }
     });
   }
 }
