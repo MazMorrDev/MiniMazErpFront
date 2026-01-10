@@ -30,6 +30,7 @@ import { Inventory } from '../../interfaces/inventory/inventory.dto';
 import { CreateInventoryDto } from '../../interfaces/inventory/create-inventory.dto';
 import { UpdateInventoryDto } from '../../interfaces/inventory/update-inventory.dto';
 import { LoginService } from '../../services/login.service';
+import { MovementsPannel } from '../movements-pannel/movements-pannel';
 
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 type ProductOption = 'EXISTING' | 'NEW';
@@ -409,9 +410,7 @@ export class CreateMovementDialog implements OnInit {
           const updateDto: UpdateInventoryDto = {
             clientId: clientId,
             productId: productId,
-            stock: existingInventory.stock + initialStock,
-            alertStock: existingInventory.alertStock,
-            warningStock: existingInventory.warningStock
+            stock: existingInventory.stock + initialStock
           };
 
           return this.inventoryService.update(existingInventory.id, updateDto).pipe(
@@ -425,9 +424,7 @@ export class CreateMovementDialog implements OnInit {
           const createDto: CreateInventoryDto = {
             clientId: clientId,
             productId: productId,
-            stock: initialStock,
-            alertStock: undefined,
-            warningStock: undefined
+            stock: initialStock
           };
 
           return this.inventoryService.create(createDto);
@@ -451,9 +448,7 @@ export class CreateMovementDialog implements OnInit {
     const createDto: CreateInventoryDto = {
       clientId: clientId,
       productId: productId,
-      stock: stock,
-      alertStock: undefined,
-      warningStock: undefined
+      stock: stock
     };
 
     return this.inventoryService.create(createDto);

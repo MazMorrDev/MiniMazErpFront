@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,6 +39,7 @@ export class LoginPage implements OnInit, OnDestroy {
   errorMessage: string = '';
   successMessage: string = '';
 
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly loginService = inject(LoginService);
@@ -47,6 +48,7 @@ export class LoginPage implements OnInit, OnDestroy {
   private subscriptions: Subscription = new Subscription();
 
   ngOnInit(): void {
+    this.loginService.logout();
     // Limpiar mensajes previos
     this.clearMessages();
 
@@ -86,6 +88,8 @@ export class LoginPage implements OnInit, OnDestroy {
       return;
     }
 
+    this.isLoading = true; // <-- Iniciar loading al principio
+
     const loginData: LoginRequest = {
       name: this.name,
       password: this.password
@@ -119,8 +123,6 @@ export class LoginPage implements OnInit, OnDestroy {
 
         // Redirigir después de un breve delay
         setTimeout(() => {
-          this.isLoading = false; // Resetear loading antes de redirigir
-          this.isLoading = true;
           this.router.navigateByUrl(this.returnUrl);
         }, 1);
       },
@@ -189,12 +191,16 @@ export class LoginPage implements OnInit, OnDestroy {
     const panelClass = type === 'success' ? 'success-snackbar' :
       type === 'warning' ? 'warning-snackbar' : 'error-snackbar';
 
+    // Forzar una nueva detección de cambios después de mostrar el SnackBar
     this.snackBar.open(message, 'Cerrar', {
       duration: 5000,
       panelClass: [panelClass],
       horizontalPosition: 'center',
       verticalPosition: 'top'
     });
+
+    // Marcar para verificación después de que el SnackBar se haya renderizado
+    this.cdr.detectChanges();
   }
 
   private clearMessages(): void {

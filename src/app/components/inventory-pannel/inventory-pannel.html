@@ -1,4 +1,3 @@
-
 <div class="container">
   <!-- Toolbar -->
   <mat-card class="toolbar-card">
@@ -6,20 +5,21 @@
       <div class="toolbar-grid">
         <!-- Search -->
         <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search by Product ID</mat-label>
-          <input matInput [(ngModel)]="searchQuery" type="text" placeholder="Search...">
+          <mat-label>Buscar producto</mat-label>
+          <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" type="text"
+            placeholder="Buscar por nombre o ID...">
           <mat-icon matSuffix>search</mat-icon>
-          @if (searchQuery) {
-            <button matSuffix mat-icon-button (click)="clearSearch()">
-              <mat-icon>close</mat-icon>
-            </button>
+          @if (searchQuery()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
           }
         </mat-form-field>
 
         <!-- Botones de acción -->
         <div class="action-wrapper">
-          <button mat-raised-button color="primary" (click)="openAddProductDialog()" class="action-btn">
-            <mat-icon>add</mat-icon> Actualizar Precio
+          <button mat-raised-button color="primary" (click)="openUpdateProductDialog()" class="action-btn">
+            <mat-icon>edit</mat-icon> Actualizar Precio
           </button>
           <button mat-raised-button color="accent" (click)="loadInventories()" class="action-btn">
             <mat-icon>refresh</mat-icon> Actualizar
@@ -30,84 +30,74 @@
   </mat-card>
 
   <!-- Loading -->
-  @if (isLoading) {
-    <div class="loading-container">
-      <p>Loading inventory...</p>
-    </div>
+  @if (isLoading()) {
+  <div class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Cargando inventario...</p>
+  </div>
   }
 
   <!-- Table -->
-  @if (!isLoading && filteredInventories.length > 0) {
-    <mat-card class="table-card">
-      <mat-card-content>
-        <table mat-table [dataSource]="filteredInventories" class="inventory-table">
-          
-          <!-- ID Column -->
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef>ID</th>
-            <td mat-cell *matCellDef="let item">{{ item.id }}</td>
-          </ng-container>
+  @if (!isLoading() && filteredInventories().length > 0) {
+  <mat-card class="table-card">
+    <mat-card-content>
+      <table mat-table [dataSource]="filteredInventories()" class="inventory-table">
 
-          <!-- Product ID Column -->
-          <ng-container matColumnDef="productId">
-            <th mat-header-cell *matHeaderCellDef>Product ID</th>
-            <td mat-cell *matCellDef="let item">{{ item.productId }}</td>
-          </ng-container>
+        <!-- Product ID Column -->
+        <ng-container matColumnDef="productId">
+          <th mat-header-cell *matHeaderCellDef>ID Producto</th>
+          <td mat-cell *matCellDef="let item">{{ item.productId }}</td>
+        </ng-container>
 
-          <!-- Client ID Column -->
-          <ng-container matColumnDef="clientId">
-            <th mat-header-cell *matHeaderCellDef>Client ID</th>
-            <td mat-cell *matCellDef="let item">{{ item.clientId }}</td>
-          </ng-container>
+        <!-- Product Name Column -->
+        <ng-container matColumnDef="productName">
+          <th mat-header-cell *matHeaderCellDef>Nombre del Producto</th>
+          <td mat-cell *matCellDef="let item">{{ getProductName(item) }}</td>
+        </ng-container>
 
-          <!-- Stock Column -->
-          <ng-container matColumnDef="stock">
-            <th mat-header-cell *matHeaderCellDef>Current Stock</th>
-            <td mat-cell *matCellDef="let item">
-              <mat-chip [color]="getStockColor(item.stock)" class="stock-chip">
+        <!-- Stock Column -->
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>Stock Actual</th>
+          <td mat-cell *matCellDef="let item">
+            <div class="stock-container">
+              <mat-chip [class]="getStockClass(item.stock)" class="stock-chip">
                 {{ item.stock }}
-              </mat-chip> 
-            </td>
-          </ng-container>
+              </mat-chip>
+            </div>
+          </td>
+        </ng-container>
 
-          <!-- Alert Stock Column -->
-          <ng-container matColumnDef="alertStock">
-            <th mat-header-cell *matHeaderCellDef>Alert Stock</th>
-            <td mat-cell *matCellDef="let item">
-              {{ item.alertStock || 'N/A' }}
-            </td>
-          </ng-container>
+        <!-- Sell Price Column -->
+        <ng-container matColumnDef="sellPrice">
+          <th mat-header-cell *matHeaderCellDef>Precio de Venta</th>
+          <td mat-cell *matCellDef="let item">{{ getSellPrice(item) }}</td>
+        </ng-container>
 
-          <!-- Warning Stock Column -->
-          <ng-container matColumnDef="warningStock">
-            <th mat-header-cell *matHeaderCellDef>Warning Stock</th>
-            <td mat-cell *matCellDef="let item">
-              {{ item.warningStock || 'N/A' }}
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </mat-card-content>
-    </mat-card>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
   }
 
   <!-- No Data -->
-  @if (!isLoading && filteredInventories.length === 0) {
-    <mat-card class="empty-card">
-      <mat-card-content>
-        <div class="empty-state">
-          <mat-icon>inventory_2</mat-icon>
-          <h3>No inventory data found</h3>
-          @if (searchQuery) {
-            <p>No results for "{{ searchQuery }}"</p>
-            <button mat-button (click)="clearSearch()">Clear Search</button>
-          } @else {
-            <p>No inventory records available</p>
-          }
-        </div>
-      </mat-card-content>
-    </mat-card>
+  @if (!isLoading() && filteredInventories().length === 0) {
+  <mat-card class="empty-card">
+    <mat-card-content>
+      <div class="empty-state">
+        <mat-icon>inventory_2</mat-icon>
+        <h3>No hay datos de inventario</h3>
+        @if (searchQuery()) {
+        <p>No hay resultados para "{{ searchQuery() }}"</p>
+        <button mat-button (click)="clearSearch()">Limpiar búsqueda</button>
+        } @else {
+        <p>No hay registros de inventario disponibles</p>
+        <button mat-raised-button color="primary" (click)="loadInventories()">
+          <mat-icon>refresh</mat-icon> Recargar
+        </button>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
   }
 </div>

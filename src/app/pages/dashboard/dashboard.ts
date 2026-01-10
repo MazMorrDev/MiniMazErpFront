@@ -80,12 +80,6 @@ export class DashboardPage {
     inventories.forEach(inventory => {
       const stock = inventory.stock;
       totalStock += stock;
-
-      // Verificar si hay stock bajo basado en alertStock o un valor por defecto
-      const alertThreshold = inventory.alertStock || 10;
-      if (stock <= alertThreshold) {
-        lowStockItems++;
-      }
     });
 
     return {

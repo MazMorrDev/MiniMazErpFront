@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,19 +13,33 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom, Subject, takeUntil } from 'rxjs';
+
+// Services
 import { ProductService } from '../../services/product.service';
 import { BuyService } from '../../services/buy.service';
 import { SellService } from '../../services/sell.service';
 import { ExpenseService } from '../../services/expense.service';
+import { InventoryService } from '../../services/inventory.service';
+
+// Interfaces
 import { Product } from '../../interfaces/inventory/product.dto';
 import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
 import { Expense } from '../../interfaces/movements/expense.dto';
+import { Inventory } from '../../interfaces/inventory/inventory.dto';
+
+// Components
 import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
-import { InventoryService } from '../../services/inventory.service';
 
 type MovementUnion = Buy | Sell | Expense;
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
+
+interface MovementTypeInfo {
+  value: MovementType;
+  label: string;
+  icon: string;
+}
 
 @Component({
   standalone: true,
@@ -47,166 +61,262 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
   templateUrl: './movements-pannel.html',
   styleUrl: './movements-pannel.scss'
 })
-export class MovementsPannel {
-  private productService = inject(ProductService);
-  private buyService = inject(BuyService);
-  private inventoryService = inject(InventoryService);
-  private sellService = inject(SellService);
-  private expenseService = inject(ExpenseService);
-  private snackBar = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+export class MovementsPannel implements OnInit, OnDestroy {
+  // Services
+  private readonly productService = inject(ProductService);
+  private readonly buyService = inject(BuyService);
+  private readonly inventoryService = inject(InventoryService);
+  private readonly sellService = inject(SellService);
+  private readonly expenseService = inject(ExpenseService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
+
+  private readonly destroy$ = new Subject<void>();
 
   // Signals
-  products = signal<Product[]>([]);
-  allMovements = signal<MovementUnion[]>([]);
-  isLoading = signal(false);
-  searchQuery = signal('');
+  readonly products = signal<Product[]>([]);
+  readonly inventories = signal<Inventory[]>([]);
+  readonly allMovements = signal<MovementUnion[]>([]);
+  readonly isLoading = signal(false);
+  readonly searchQuery = signal('');
 
-  // Filtros adicionales (opcionales)
-  filters = signal<{
-    productId?: number;
-    movementType?: MovementType;
-  }>({});
+  // Debug signal
+  readonly debugData = signal<any>(null);
 
-  // Computed signals
-  filteredMovements = computed(() => {
-    const movements = this.allMovements();
-    const query = this.searchQuery().toLowerCase();
-    const filter = this.filters();
-
-    return movements.filter(movement => {
-      // 1. Filtro de búsqueda
-      if (query) {
-        const productName = this.getProductName(movement).toLowerCase();
-        const description = (movement.description || '').toLowerCase();
-        const matchesSearch = productName.includes(query) || description.includes(query);
-        if (!matchesSearch) return false;
-      }
-
-      return true;
-    });
-  });
-
-  // Columnas de la tabla
-  displayedColumns = signal<string[]>([
-    'date',
-    'product',
-    'type',
-    'description',
-    'quantity',
-    'details',
-    'actions'
-  ]);
-
-  // Tipos para UI
-  movementTypes = signal<{ value: MovementType, label: string, icon: string }[]>([
+  // Constants
+  readonly movementTypes: MovementTypeInfo[] = [
     { value: 'BUY', label: 'Compra', icon: 'shopping_cart' },
     { value: 'SELL', label: 'Venta', icon: 'point_of_sale' },
     { value: 'EXPENSE', label: 'Gasto', icon: 'payments' }
+  ];
+
+  readonly displayedColumns = signal<string[]>([
+    'date', 'product', 'type', 'description', 'quantity', 'details', 'actions'
   ]);
 
-  constructor() {
-    this.loadProducts();
-    this.loadAllMovements();
+  // Computed signals
+  readonly filteredMovements = computed(() => {
+    const movements = this.allMovements();
+    const query = this.searchQuery().toLowerCase();
+
+    if (!query) return movements;
+
+    return movements.filter(movement => {
+      const productName = this.getProductName(movement).toLowerCase();
+      const description = (movement.description || '').toLowerCase();
+
+      return productName.includes(query) || description.includes(query);
+    });
+  });
+
+  ngOnInit(): void {
+    this.loadInitialData();
   }
 
-  // --- MÉTODOS PRINCIPALES ---
-  loadProducts() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // --- MAIN METHODS ---
+  private async loadInitialData(): Promise<void> {
     this.isLoading.set(true);
-    this.productService.getAll().subscribe({
-      next: (products) => {
-        this.products.set(products);
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Error cargando productos:', error);
-        this.snackBar.open('Error al cargar productos', 'Cerrar', { duration: 3000 });
-        this.isLoading.set(false);
-      }
+
+    try {
+      // Cargar inventarios y productos primero
+      await Promise.all([
+        this.loadInventories(),
+        this.loadProducts()
+      ]);
+      
+      // Luego cargar movimientos
+      await this.loadAllMovements();
+      
+    } catch (error) {
+      console.error('Error en loadInitialData:', error);
+      this.showErrorMessage('Error al cargar datos iniciales');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private loadProducts(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.productService.getAll()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (products) => {
+            console.log('Productos cargados:', products.length, 'primer producto:', products[0]);
+            this.products.set(products);
+            resolve();
+          },
+          error: (error) => {
+            console.error('Error cargando productos:', error);
+            this.showErrorMessage('Error al cargar productos');
+            reject(error);
+          }
+        });
     });
   }
 
-  loadAllMovements() {
+  private loadInventories(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.inventoryService.getAll()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (inventories) => {
+            console.log('Inventarios cargados:', inventories.length, 'primer inventario:', inventories[0]);
+            this.inventories.set(inventories);
+            resolve();
+          },
+          error: (error) => {
+            console.error('Error cargando inventarios:', error);
+            this.showErrorMessage('Error al cargar inventarios');
+            reject(error);
+          }
+        });
+    });
+  }
+
+  async loadAllMovements(): Promise<void> {
     this.isLoading.set(true);
-    Promise.all([
-      this.buyService.getAll().toPromise(),
-      this.sellService.getAll().toPromise(),
-      this.expenseService.getAll().toPromise()
-    ]).then(([buys, sells, expenses]) => {
+
+    try {
+      console.log('=== INICIANDO CARGA DE MOVIMIENTOS ===');
+      
+      // Obtener datos con debug
+      const [buys, sells, expenses] = await Promise.all([
+        lastValueFrom(this.buyService.getAll().pipe(takeUntil(this.destroy$))),
+        lastValueFrom(this.sellService.getAll().pipe(takeUntil(this.destroy$))),
+        lastValueFrom(this.expenseService.getAll().pipe(takeUntil(this.destroy$)))
+      ]);
+
+      console.log('Buys recibidas:', buys);
+      console.log('Sells recibidas:', sells);
+      console.log('Expenses recibidas:', expenses);
+
+      // Validar que no sean undefined
+      const validBuys = buys || [];
+      const validSells = sells || [];
+      const validExpenses = expenses || [];
+
+      console.log(`Buys válidas: ${validBuys.length}`);
+      console.log(`Sells válidas: ${validSells.length}`);
+      console.log(`Expenses válidas: ${validExpenses.length}`);
+
+      // Combinar movimientos
       const allMovements: MovementUnion[] = [
-        ...(buys || []),
-        ...(sells || []),
-        ...(expenses || [])
+        ...validBuys,
+        ...validSells,
+        ...validExpenses
       ];
-      allMovements.sort((a, b) =>
-        new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()
-      );
+
+      console.log('Total movimientos combinados:', allMovements.length);
+      
+      if (allMovements.length > 0) {
+        console.log('Primer movimiento combinado:', allMovements[0]);
+        console.log('¿Tiene id?:', 'id' in allMovements[0], 'valor:', allMovements[0].id);
+        console.log('¿Tiene inventoryId?:', 'inventoryId' in allMovements[0], 'valor:', allMovements[0].inventoryId);
+      }
+
+      // Guardar para debug
+      this.debugData.set({
+        buys: validBuys,
+        sells: validSells,
+        expenses: validExpenses,
+        allMovements: allMovements
+      });
+
+      this.sortMovementsByDate(allMovements);
       this.allMovements.set(allMovements);
+
+    } catch (error) {
+      console.error('Error detallado cargando movimientos:', error);
+      this.showErrorMessage('Error al cargar movimientos');
+    } finally {
       this.isLoading.set(false);
-    }).catch(error => {
-      console.error('Error cargando movimientos:', error);
-      this.snackBar.open('Error al cargar movimientos', 'Cerrar', { duration: 3000 });
-      this.isLoading.set(false);
-    });
+    }
   }
 
-  openAddMovementDialog() {
+  private sortMovementsByDate(movements: MovementUnion[]): void {
+    movements.sort((a, b) =>
+      new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()
+    );
+  }
+
+  // --- UI METHODS ---
+  openAddMovementDialog(): void {
     const dialogRef = this.dialog.open(CreateMovementDialog, {
       width: '700px',
-      data: {
-        products: this.products()
-      }
+      data: { products: this.products() }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'success') {
-        this.loadAllMovements();
-        this.snackBar.open('Movimiento registrado exitosamente', 'Cerrar', { duration: 3000 });
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result === 'success') {
+          this.loadAllMovements();
+          this.showSuccessMessage('Movimiento registrado exitosamente');
+        }
+      });
   }
 
-  clearSearch() {
+  clearSearch(): void {
     this.searchQuery.set('');
   }
 
-  remove(movement: MovementUnion) {
+  async remove(movement: MovementUnion): Promise<void> {
     if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
 
     this.isLoading.set(true);
     const movementId = movement.id;
 
-    if (this.isBuy(movement)) {
-      this.buyService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar compra', error)
-      });
-    } else if (this.isSell(movement)) {
-      this.sellService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar venta', error)
-      });
-    } else if (this.isExpense(movement)) {
-      this.expenseService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar gasto', error)
-      });
-    } else {
-      this.snackBar.open('Tipo de movimiento no reconocido', 'Cerrar', { duration: 3000 });
+    try {
+      if (this.isBuy(movement)) {
+        await lastValueFrom(this.buyService.delete(movementId).pipe(takeUntil(this.destroy$)));
+        this.handleDeleteSuccess();
+      } else if (this.isSell(movement)) {
+        await lastValueFrom(this.sellService.delete(movementId).pipe(takeUntil(this.destroy$)));
+        this.handleDeleteSuccess();
+      } else if (this.isExpense(movement)) {
+        await lastValueFrom(this.expenseService.delete(movementId).pipe(takeUntil(this.destroy$)));
+        this.handleDeleteSuccess();
+      } else {
+        this.showWarningMessage('Tipo de movimiento no reconocido');
+      }
+    } catch (error) {
+      const errorMessage = this.isBuy(movement) ? 'Error al eliminar compra' :
+        this.isSell(movement) ? 'Error al eliminar venta' :
+          'Error al eliminar gasto';
+      this.handleError(errorMessage, error);
+    } finally {
       this.isLoading.set(false);
     }
   }
 
-  // --- MÉTODOS DE AYUDA ---
-  private handleDeleteSuccess() {
-    this.snackBar.open('Movimiento eliminado exitosamente', 'Cerrar', { duration: 3000 });
+  // --- HELPER METHODS ---
+  private handleDeleteSuccess(): void {
+    this.showSuccessMessage('Movimiento eliminado exitosamente');
     this.loadAllMovements();
   }
 
-  private handleError(message: string, error: any) {
+  private handleError(message: string, error: any): void {
     console.error(message, error);
-    this.snackBar.open(`${message}: ${error?.message || 'Error desconocido'}`, 'Cerrar', { duration: 5000 });
-    this.isLoading.set(false);
+    const errorDetail = error?.error?.message || error?.message || 'Error desconocido';
+    this.showErrorMessage(`${message}: ${errorDetail}`);
+  }
+
+  // --- TYPE GUARDS ---
+  isBuy(movement: MovementUnion): movement is Buy {
+    return 'unitPrice' in movement && typeof (movement as Buy).unitPrice === 'number';
+  }
+
+  isExpense(movement: MovementUnion): movement is Expense {
+    return 'expenseType' in movement && 'totalPrice' in movement;
+  }
+
+  isSell(movement: MovementUnion): movement is Sell {
+    return !this.isBuy(movement) && !this.isExpense(movement);
   }
 
   getMovementType(movement: MovementUnion): MovementType {
@@ -215,45 +325,64 @@ export class MovementsPannel {
     return 'EXPENSE';
   }
 
-  isBuy(movement: MovementUnion): movement is Buy {
-    return (movement as Buy).unitPrice !== undefined;
-  }
-
-  isSell(movement: MovementUnion): movement is Sell {
-    const hasBuyProperties = 'unitPrice' in movement;
-    const hasExpenseProperties = 'expenseType' in movement && 'totalPrice' in movement;
-    return !hasBuyProperties && !hasExpenseProperties && 'id' in movement;
-  }
-
-  isExpense(movement: MovementUnion): movement is Expense {
-    return (movement as Expense).expenseType !== undefined;
-  }
-
+  // --- UI DATA METHODS ---
   getProductName(movement: MovementUnion): string {
-    // Verifica si el movimiento tiene productId directo
-    const productId = (movement as any).productId;
-
-    if (productId) {
-      const product = this.products().find(p => p.id === productId);
-      return product?.name || `Producto ${productId}`;
+    // Si el movimiento no tiene datos, retornar placeholder
+    if (!movement || typeof movement.id === 'undefined') {
+      return 'Cargando...';
     }
 
-    return 'Sin producto';
+    // Verificar que tenemos inventoryId
+    if (typeof movement.inventoryId === 'undefined') {
+      console.warn('Movimiento sin inventoryId:', movement);
+      return 'Sin inventario';
+    }
+
+    const inventories = this.inventories();
+    const products = this.products();
+
+    // Si no hay datos cargados aún
+    if (inventories.length === 0 || products.length === 0) {
+      return 'Cargando datos...';
+    }
+
+    const inventory = inventories.find(inv => inv.id === movement.inventoryId);
+    
+    if (!inventory) {
+      console.warn(`Inventario ${movement.inventoryId} no encontrado para movimiento ${movement.id}`);
+      return `Inv#${movement.inventoryId}`;
+    }
+
+    const product = products.find(p => p.id === inventory.productId);
+    
+    if (!product) {
+      console.warn(`Producto ${inventory.productId} no encontrado para inventario ${inventory.id}`);
+      return `Prod#${inventory.productId}`;
+    }
+
+    return product.name;
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'Fecha inválida';
+    
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formateando fecha:', dateString, error);
+      return dateString;
+    }
   }
 
-  getMovementTypeInfo(movement: MovementUnion) {
+  getMovementTypeInfo(movement: MovementUnion): MovementTypeInfo {
     const type = this.getMovementType(movement);
-    return this.movementTypes().find(t => t.value === type) ?? {
+    return this.movementTypes.find(t => t.value === type) || {
       value: type,
       label: type,
       icon: 'help'
@@ -262,11 +391,54 @@ export class MovementsPannel {
 
   getMovementDetails(movement: MovementUnion): string {
     if (this.isBuy(movement)) {
-      return `Precio unitario: $${movement.unitPrice.toFixed(2)} | Total: $${(movement.unitPrice * movement.quantity).toFixed(2)}`;
+      const buy = movement as Buy;
+      if (typeof buy.unitPrice === 'undefined') {
+        return 'Precio no disponible';
+      }
+      const total = buy.unitPrice * buy.quantity;
+      return `Precio unitario: $${buy.unitPrice.toFixed(2)} | Total: $${total.toFixed(2)}`;
     }
+
     if (this.isExpense(movement)) {
-      return `Total: $${movement.totalPrice.toFixed(2)}`;
+      const expense = movement as Expense;
+      if (typeof expense.totalPrice === 'undefined') {
+        return 'Precio no disponible';
+      }
+      return `Total: $${expense.totalPrice.toFixed(2)}`;
     }
+
     return `Cantidad: ${movement.quantity}`;
+  }
+
+  // --- SNACKBAR HELPERS ---
+  private showSuccessMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  private showErrorMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private showWarningMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 3000,
+      panelClass: ['warning-snackbar']
+    });
+  }
+
+  // --- DEBUG METHOD ---
+  showDebugInfo(): void {
+    const debug = this.debugData();
+    console.log('=== DEBUG INFO ===');
+    console.log('Debug data:', debug);
+    console.log('Products signal:', this.products());
+    console.log('Inventories signal:', this.inventories());
+    console.log('Movements signal:', this.allMovements());
   }
 }

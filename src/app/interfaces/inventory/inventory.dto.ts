@@ -3,6 +3,4 @@ export interface Inventory {
     clientId: number;
     productId: number;
     stock: number;
-    alertStock?: number;
-    warningStock?: number;
 }
