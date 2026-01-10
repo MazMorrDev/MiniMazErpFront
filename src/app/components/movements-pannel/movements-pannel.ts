@@ -21,6 +21,7 @@ import { BuyService } from '../../services/buy.service';
 import { SellService } from '../../services/sell.service';
 import { ExpenseService } from '../../services/expense.service';
 import { InventoryService } from '../../services/inventory.service';
+import { MovementsService } from '../../services/movements.service'; // <-- NUEVO
 
 // Interfaces
 import { Product } from '../../interfaces/inventory/product.dto';
@@ -28,11 +29,20 @@ import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
 import { Expense } from '../../interfaces/movements/expense.dto';
 import { Inventory } from '../../interfaces/inventory/inventory.dto';
+import { Movement } from '../../interfaces/movements/movement.dto'; // <-- NUEVO
 
 // Components
 import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
 
-type MovementUnion = Buy | Sell | Expense;
+// Tipo actualizado para movimientos enriquecidos
+interface EnrichedMovement extends Movement {
+  _type: 'BUY' | 'SELL' | 'EXPENSE';
+  unitPrice?: number;
+  sellPrice?: number;
+  expenseType?: string;
+  totalPrice?: number;
+}
+
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
 
 interface MovementTypeInfo {
@@ -68,6 +78,7 @@ export class MovementsPannel implements OnInit, OnDestroy {
   private readonly inventoryService = inject(InventoryService);
   private readonly sellService = inject(SellService);
   private readonly expenseService = inject(ExpenseService);
+  private readonly movementsService = inject(MovementsService); // <-- NUEVO
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
@@ -76,7 +87,7 @@ export class MovementsPannel implements OnInit, OnDestroy {
   // Signals
   readonly products = signal<Product[]>([]);
   readonly inventories = signal<Inventory[]>([]);
-  readonly allMovements = signal<MovementUnion[]>([]);
+  readonly allMovements = signal<EnrichedMovement[]>([]); // <-- CAMBIADO
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
 
@@ -184,51 +195,108 @@ export class MovementsPannel implements OnInit, OnDestroy {
     try {
       console.log('=== INICIANDO CARGA DE MOVIMIENTOS ===');
       
-      // Obtener datos con debug
+      // 1. Obtener TODOS los movements primero (tienen inventoryId)
+      const allMovements = await lastValueFrom(
+        this.movementsService.getAll().pipe(takeUntil(this.destroy$))
+      );
+
+      console.log('Movements del MovementService:', allMovements?.length || 0);
+      
+      if (allMovements && allMovements.length > 0) {
+        console.log('Primer movement del MovementService:', allMovements[0]);
+        console.log('¿Tiene id?:', 'id' in allMovements[0], 'valor:', allMovements[0]?.id);
+        console.log('¿Tiene inventoryId?:', 'inventoryId' in allMovements[0], 'valor:', allMovements[0]?.inventoryId);
+      }
+
+      // 2. Obtener buys, sells, expenses
       const [buys, sells, expenses] = await Promise.all([
         lastValueFrom(this.buyService.getAll().pipe(takeUntil(this.destroy$))),
         lastValueFrom(this.sellService.getAll().pipe(takeUntil(this.destroy$))),
         lastValueFrom(this.expenseService.getAll().pipe(takeUntil(this.destroy$)))
       ]);
 
-      console.log('Buys recibidas:', buys);
-      console.log('Sells recibidas:', sells);
-      console.log('Expenses recibidas:', expenses);
+      console.log('Buys recibidas:', buys?.length || 0);
+      console.log('Sells recibidas:', sells?.length || 0);
+      console.log('Expenses recibidas:', expenses?.length || 0);
 
-      // Validar que no sean undefined
-      const validBuys = buys || [];
-      const validSells = sells || [];
-      const validExpenses = expenses || [];
-
-      console.log(`Buys válidas: ${validBuys.length}`);
-      console.log(`Sells válidas: ${validSells.length}`);
-      console.log(`Expenses válidas: ${validExpenses.length}`);
-
-      // Combinar movimientos
-      const allMovements: MovementUnion[] = [
-        ...validBuys,
-        ...validSells,
-        ...validExpenses
-      ];
-
-      console.log('Total movimientos combinados:', allMovements.length);
-      
-      if (allMovements.length > 0) {
-        console.log('Primer movimiento combinado:', allMovements[0]);
-        console.log('¿Tiene id?:', 'id' in allMovements[0], 'valor:', allMovements[0].id);
-        console.log('¿Tiene inventoryId?:', 'inventoryId' in allMovements[0], 'valor:', allMovements[0].inventoryId);
+      // 3. Crear mapa de movements por ID para acceso rápido
+      const movementsMap = new Map<number, Movement>();
+      if (allMovements) {
+        allMovements.forEach(movement => {
+          if (movement?.id) {
+            movementsMap.set(movement.id, movement);
+          }
+        });
       }
 
-      // Guardar para debug
+      console.log('Movements en mapa:', movementsMap.size);
+
+      // 4. Función para enriquecer datos
+      const enrichData = (items: any[], type: MovementType): EnrichedMovement[] => {
+        if (!items || items.length === 0) return [];
+        
+        return items.map(item => {
+          const movementId = item.movementId || item.id;
+          const movementData = movementsMap.get(movementId);
+          
+          // DEBUG: Ver qué estamos encontrando
+          if (!movementData) {
+            console.warn(`No se encontró movement para ${type} con ID:`, movementId);
+            console.warn('Item completo:', item);
+          }
+
+          // Crear objeto enriquecido
+          const enriched: EnrichedMovement = {
+            // Campos base de Movement
+            id: movementId,
+            inventoryId: movementData?.inventoryId || item.inventoryId,
+            description: movementData?.description || item.description,
+            quantity: movementData?.quantity || item.quantity,
+            movementDate: movementData?.movementDate || item.movementDate,
+            // Tipo
+            _type: type,
+            // Campos específicos según tipo
+            ...item
+          };
+
+          return enriched;
+        }).filter(item => item !== null);
+      };
+
+      // 5. Enriquecer cada tipo
+      const enrichedBuys = enrichData(buys || [], 'BUY');
+      const enrichedSells = enrichData(sells || [], 'SELL');
+      const enrichedExpenses = enrichData(expenses || [], 'EXPENSE');
+
+      // 6. Combinar todos
+      const combinedMovements: EnrichedMovement[] = [
+        ...enrichedBuys,
+        ...enrichedSells,
+        ...enrichedExpenses
+      ];
+
+      console.log('Total movimientos combinados:', combinedMovements.length);
+      
+      if (combinedMovements.length > 0) {
+        console.log('Primer movimiento enriquecido:', combinedMovements[0]);
+        console.log('¿Tiene id?:', 'id' in combinedMovements[0], 'valor:', combinedMovements[0].id);
+        console.log('¿Tiene inventoryId?:', 'inventoryId' in combinedMovements[0], 'valor:', combinedMovements[0].inventoryId);
+        console.log('¿Tiene _type?:', '_type' in combinedMovements[0], 'valor:', combinedMovements[0]._type);
+      }
+
+      // 7. Guardar para debug
       this.debugData.set({
-        buys: validBuys,
-        sells: validSells,
-        expenses: validExpenses,
-        allMovements: allMovements
+        rawMovements: allMovements,
+        rawBuys: buys,
+        rawSells: sells,
+        rawExpenses: expenses,
+        enrichedMovements: combinedMovements,
+        movementsMapSize: movementsMap.size
       });
 
-      this.sortMovementsByDate(allMovements);
-      this.allMovements.set(allMovements);
+      // 8. Ordenar y guardar
+      this.sortMovementsByDate(combinedMovements);
+      this.allMovements.set(combinedMovements);
 
     } catch (error) {
       console.error('Error detallado cargando movimientos:', error);
@@ -238,7 +306,7 @@ export class MovementsPannel implements OnInit, OnDestroy {
     }
   }
 
-  private sortMovementsByDate(movements: MovementUnion[]): void {
+  private sortMovementsByDate(movements: EnrichedMovement[]): void {
     movements.sort((a, b) =>
       new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()
     );
@@ -265,28 +333,33 @@ export class MovementsPannel implements OnInit, OnDestroy {
     this.searchQuery.set('');
   }
 
-  async remove(movement: MovementUnion): Promise<void> {
+  async remove(movement: EnrichedMovement): Promise<void> {
     if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
 
     this.isLoading.set(true);
     const movementId = movement.id;
 
     try {
-      if (this.isBuy(movement)) {
-        await lastValueFrom(this.buyService.delete(movementId).pipe(takeUntil(this.destroy$)));
-        this.handleDeleteSuccess();
-      } else if (this.isSell(movement)) {
-        await lastValueFrom(this.sellService.delete(movementId).pipe(takeUntil(this.destroy$)));
-        this.handleDeleteSuccess();
-      } else if (this.isExpense(movement)) {
-        await lastValueFrom(this.expenseService.delete(movementId).pipe(takeUntil(this.destroy$)));
-        this.handleDeleteSuccess();
-      } else {
-        this.showWarningMessage('Tipo de movimiento no reconocido');
+      // Usar el tipo para saber qué servicio llamar
+      switch (movement._type) {
+        case 'BUY':
+          await lastValueFrom(this.buyService.delete(movementId).pipe(takeUntil(this.destroy$)));
+          break;
+        case 'SELL':
+          await lastValueFrom(this.sellService.delete(movementId).pipe(takeUntil(this.destroy$)));
+          break;
+        case 'EXPENSE':
+          await lastValueFrom(this.expenseService.delete(movementId).pipe(takeUntil(this.destroy$)));
+          break;
+        default:
+          this.showWarningMessage('Tipo de movimiento no reconocido');
+          return;
       }
+      
+      this.handleDeleteSuccess();
     } catch (error) {
-      const errorMessage = this.isBuy(movement) ? 'Error al eliminar compra' :
-        this.isSell(movement) ? 'Error al eliminar venta' :
+      const errorMessage = movement._type === 'BUY' ? 'Error al eliminar compra' :
+        movement._type === 'SELL' ? 'Error al eliminar venta' :
           'Error al eliminar gasto';
       this.handleError(errorMessage, error);
     } finally {
@@ -306,27 +379,25 @@ export class MovementsPannel implements OnInit, OnDestroy {
     this.showErrorMessage(`${message}: ${errorDetail}`);
   }
 
-  // --- TYPE GUARDS ---
-  isBuy(movement: MovementUnion): movement is Buy {
-    return 'unitPrice' in movement && typeof (movement as Buy).unitPrice === 'number';
+  // --- TYPE GUARDS (actualizadas) ---
+  isBuy(movement: EnrichedMovement): boolean {
+    return movement._type === 'BUY';
   }
 
-  isExpense(movement: MovementUnion): movement is Expense {
-    return 'expenseType' in movement && 'totalPrice' in movement;
+  isExpense(movement: EnrichedMovement): boolean {
+    return movement._type === 'EXPENSE';
   }
 
-  isSell(movement: MovementUnion): movement is Sell {
-    return !this.isBuy(movement) && !this.isExpense(movement);
+  isSell(movement: EnrichedMovement): boolean {
+    return movement._type === 'SELL';
   }
 
-  getMovementType(movement: MovementUnion): MovementType {
-    if (this.isBuy(movement)) return 'BUY';
-    if (this.isSell(movement)) return 'SELL';
-    return 'EXPENSE';
+  getMovementType(movement: EnrichedMovement): MovementType {
+    return movement._type;
   }
 
   // --- UI DATA METHODS ---
-  getProductName(movement: MovementUnion): string {
+  getProductName(movement: EnrichedMovement): string {
     // Si el movimiento no tiene datos, retornar placeholder
     if (!movement || typeof movement.id === 'undefined') {
       return 'Cargando...';
@@ -380,8 +451,8 @@ export class MovementsPannel implements OnInit, OnDestroy {
     }
   }
 
-  getMovementTypeInfo(movement: MovementUnion): MovementTypeInfo {
-    const type = this.getMovementType(movement);
+  getMovementTypeInfo(movement: EnrichedMovement): MovementTypeInfo {
+    const type = movement._type;
     return this.movementTypes.find(t => t.value === type) || {
       value: type,
       label: type,
@@ -389,22 +460,22 @@ export class MovementsPannel implements OnInit, OnDestroy {
     };
   }
 
-  getMovementDetails(movement: MovementUnion): string {
+  getMovementDetails(movement: EnrichedMovement): string {
     if (this.isBuy(movement)) {
-      const buy = movement as Buy;
-      if (typeof buy.unitPrice === 'undefined') {
+      const unitPrice = (movement as any).unitPrice;
+      if (typeof unitPrice === 'undefined') {
         return 'Precio no disponible';
       }
-      const total = buy.unitPrice * buy.quantity;
-      return `Precio unitario: $${buy.unitPrice.toFixed(2)} | Total: $${total.toFixed(2)}`;
+      const total = unitPrice * movement.quantity;
+      return `Precio unitario: $${unitPrice.toFixed(2)} | Total: $${total.toFixed(2)}`;
     }
 
     if (this.isExpense(movement)) {
-      const expense = movement as Expense;
-      if (typeof expense.totalPrice === 'undefined') {
+      const totalPrice = (movement as any).totalPrice;
+      if (typeof totalPrice === 'undefined') {
         return 'Precio no disponible';
       }
-      return `Total: $${expense.totalPrice.toFixed(2)}`;
+      return `Total: $${totalPrice.toFixed(2)}`;
     }
 
     return `Cantidad: ${movement.quantity}`;
@@ -440,5 +511,18 @@ export class MovementsPannel implements OnInit, OnDestroy {
     console.log('Products signal:', this.products());
     console.log('Inventories signal:', this.inventories());
     console.log('Movements signal:', this.allMovements());
+    
+    // Probar el MovementService directamente
+    this.movementsService.getAll().subscribe({
+      next: (movements) => {
+        console.log('✅ MovementService funciona! Movimientos:', movements.length);
+        if (movements.length > 0) {
+          console.log('Primer movimiento:', movements[0]);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error en MovementService:', error);
+      }
+    });
   }
 }
