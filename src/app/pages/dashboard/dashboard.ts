@@ -11,20 +11,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { ProductService } from '../../services/product.service';
-import { BuyService } from '../../services/buy.service';
 import { InventoryService } from '../../services/inventory.service';
 import { Product } from '../../interfaces/inventory/product.dto';
 import { Inventory } from '../../interfaces/inventory/inventory.dto';
 import { forkJoin } from 'rxjs';
-import { SellService } from '../../services/sell.service';
-import { ExpenseService } from '../../services/expense.service';
+import { MovementsService } from '../../services/movements.service';
+import { Movement } from '../../interfaces/movements/movement.dto';
 
-// Interfaz unificada para movimientos en el dashboard
-interface DashboardMovement {
-  id: number;
-  description: string;
-  quantity: number;
-  movementDate: string;
+// Interfaz extendida para el dashboard
+interface DashboardMovement extends Movement {
   type: 'IN' | 'OUT' | 'EXPENSE';
 }
 
@@ -42,17 +37,15 @@ interface DashboardMovement {
     MatButtonModule,
     MatTableModule,
     MatChipsModule,
-    MatDividerModule,
+    MatDividerModule
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
 export class DashboardPage {
   private productService = inject(ProductService);
-  private buyService = inject(BuyService);
-  private sellService = inject(SellService);
-  private expenseService = inject(ExpenseService);
   private inventoryService = inject(InventoryService);
+  private movementService = inject(MovementsService);
 
   // Signals for data
   products = signal<Product[]>([]);
@@ -60,26 +53,37 @@ export class DashboardPage {
   movements = signal<DashboardMovement[]>([]);
   isLoading = signal(true);
 
+  // Column definitions
+  recentMovementsColumns = ['productName', 'description', 'type', 'quantity', 'date'];
+  stockColumns = ['productName', 'stock', 'status'];
+
   // Computed signals for dashboard metrics
   totalProducts = computed(() => this.products().length);
 
   totalMovements = computed(() => this.movements().length);
 
-  recentMovements = computed(() =>
-    this.movements()
+  recentMovements = computed(() => {
+    const movements = this.movements();
+    // Ordenar por fecha de forma descendente y tomar los primeros 5
+    return [...movements]
       .sort((a, b) => new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime())
-      .slice(0, 5)
-  );
+      .slice(0, 5);
+  });
 
   stockSummary = computed(() => {
     const inventories = this.inventories();
 
     let totalStock = 0;
     let lowStockItems = 0;
+    const lowStockThreshold = 10;
 
     inventories.forEach(inventory => {
       const stock = inventory.stock;
       totalStock += stock;
+
+      if (stock < lowStockThreshold && stock > 0) {
+        lowStockItems++;
+      }
     });
 
     return {
@@ -92,21 +96,47 @@ export class DashboardPage {
   movementStats = computed(() => {
     const movements = this.movements();
     const today = new Date();
-    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
 
-    const weeklyMovements = movements.filter(m => new Date(m.movementDate) >= lastWeek);
-    const monthlyMovements = movements.filter(m => new Date(m.movementDate) >= lastMonth);
+    // Para "este mes" (mes actual)
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    lastDayOfMonth.setHours(23, 59, 59, 999); // Fin del día
+
+    // Para "últimos 7 días"
+    const lastWeek = new Date(today);
+    lastWeek.setDate(today.getDate() - 6); // Incluyendo hoy (7 días en total)
+    lastWeek.setHours(0, 0, 0, 0);
+
+    const weeklyMovements = movements.filter(m => {
+      try {
+        const movementDate = new Date(m.movementDate);
+        return movementDate >= lastWeek && movementDate <= today;
+      } catch (error) {
+        return false;
+      }
+    });
+
+    const monthlyMovements = movements.filter(m => {
+      try {
+        const movementDate = new Date(m.movementDate);
+        return movementDate >= firstDayOfMonth && movementDate <= lastDayOfMonth;
+      } catch (error) {
+        return false;
+      }
+    });
 
     const ins = movements.filter(m => m.type === 'IN').length;
     const outs = movements.filter(m => m.type === 'OUT').length;
+    const total = ins + outs;
 
     return {
       weeklyCount: weeklyMovements.length,
       monthlyCount: monthlyMovements.length,
       ins,
       outs,
-      insPercentage: movements.length > 0 ? Math.round((ins / movements.length) * 100) : 0
+      insPercentage: total > 0 ? Math.round((ins / total) * 100) : 0
     };
   });
 
@@ -119,45 +149,18 @@ export class DashboardPage {
   loadData() {
     this.isLoading.set(true);
 
-    // Cargar productos, inventarios y movimientos en paralelo
+    // Cargar todos los datos necesarios
     forkJoin({
       products: this.productService.getAll(),
       inventories: this.inventoryService.getAll(),
-      buys: this.buyService.getAll(),
-      sells: this.sellService.getAll(),
-      expenses: this.expenseService.getAll()
+      movements: this.movementService.getAll()
     }).subscribe({
-      next: ({ products, inventories, buys, sells, expenses }) => {
+      next: ({ products, inventories, movements }) => {
         this.products.set(products);
         this.inventories.set(inventories);
-
-        // Convertir todos los movimientos a DashboardMovement
-        const allMovements: DashboardMovement[] = [
-          ...buys.map(buy => ({
-            id: buy.id,
-            description: buy.description || 'Compra',
-            quantity: buy.quantity,
-            movementDate: buy.movementDate,
-            type: 'IN' as const
-          })),
-          ...sells.map(sell => ({
-            id: sell.id,
-            description: sell.description || 'Venta',
-            quantity: sell.quantity,
-            movementDate: sell.movementDate,
-            type: 'OUT' as const
-          })),
-          ...expenses.map(expense => ({
-            id: expense.id,
-            description: expense.description || 'Gasto',
-            quantity: expense.quantity,
-            movementDate: expense.movementDate,
-            type: 'EXPENSE' as const
-          }))
-        ];
-
-        this.movements.set(allMovements);
-        this.isLoading.set(false);
+        
+        // Obtener tipos específicos de movimientos para determinar el tipo
+        this.loadMovementTypes(movements);
       },
       error: (error) => {
         console.error('Error cargando datos del dashboard:', error);
@@ -169,21 +172,85 @@ export class DashboardPage {
     });
   }
 
-  // Obtener el inventario de un producto específico
-  getProductInventory(productId: number): Inventory | undefined {
-    return this.inventories().find(inv => inv.productId === productId);
+  private loadMovementTypes(movements: Movement[]) {
+    // Cargar todos los tipos de movimientos en paralelo
+    forkJoin({
+      buys: this.movementService.getAllBuys(),
+      sells: this.movementService.getAllSells(),
+    }).subscribe({
+      next: ({ buys, sells }) => {
+        // Crear arrays de IDs para cada tipo
+        const buyIds = new Set(buys.map(buy => buy.id));
+        const sellIds = new Set(sells.map(sell => sell.id));
+
+        // Mapear los movimientos con sus tipos
+        const typedMovements: DashboardMovement[] = movements.map(movement => {
+          let type: 'IN' | 'OUT' | 'EXPENSE';
+          
+          if (buyIds.has(movement.id)) {
+            type = 'IN';
+          } else if (sellIds.has(movement.id)) {
+            type = 'OUT';
+          } else {
+            // Por defecto, intentar determinar por cantidad/descripción
+            type = this.determineMovementType(movement);
+          }
+
+          return {
+            ...movement,
+            type
+          };
+        });
+
+        this.movements.set(typedMovements);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error determinando tipos de movimientos:', error);
+        // Si hay error, asignar tipos por defecto
+        const typedMovements: DashboardMovement[] = movements.map(movement => ({
+          ...movement,
+          type: this.determineMovementType(movement)
+        }));
+        this.movements.set(typedMovements);
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  // Obtener el stock de un producto
-  getProductStock(productId: number): number {
-    const inventory = this.getProductInventory(productId);
-    return inventory ? inventory.stock : 0;
+  private determineMovementType(movement: Movement): 'IN' | 'OUT' | 'EXPENSE' {
+    // Lógica para determinar el tipo basado en descripción o cantidad
+    const description = movement.description?.toLowerCase() || '';
+    
+    if (description.includes('compra') || description.includes('entrada') || description.includes('buy')) {
+      return 'IN';
+    } else if (description.includes('venta') || description.includes('salida') || description.includes('sell')) {
+      return 'OUT';
+    } else if (description.includes('gasto') || description.includes('expense')) {
+      return 'EXPENSE';
+    }
+    
+    // Por defecto, basado en el contexto de la aplicación
+    // Si normalmente las compras aumentan stock y las ventas disminuyen,
+    // pero necesitas más información para esto
+    return 'OUT'; // O algún valor por defecto
   }
 
   // Obtener el nombre del producto
-  getProductName(productId: number): string {
-    const product = this.products().find(p => p.id === productId);
-    return product ? product.name : 'Producto no encontrado';
+  getProductName(movement: DashboardMovement): string {
+    if (!movement) return 'Producto no encontrado';
+
+    // Buscar el inventario para obtener el productId
+    if (movement.inventoryId) {
+      const inventory = this.inventories().find(inv => inv.id === movement.inventoryId);
+      if (inventory) {
+        const product = this.products().find(p => p.id === inventory.productId);
+        return product ? product.name : `Producto #${inventory.productId}`;
+      }
+      return `Inventario #${movement.inventoryId}`;
+    }
+
+    return 'Sin producto asociado';
   }
 
   // Obtener inventarios con información del producto para la tabla
@@ -225,5 +292,24 @@ export class DashboardPage {
     if (stock === 0) return 'warn';
     if (stock < 10) return 'accent';
     return 'primary';
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch (error) {
+      return dateString;
+    }
   }
 }

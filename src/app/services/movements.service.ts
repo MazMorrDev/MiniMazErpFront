@@ -5,6 +5,10 @@ import { Movement } from '../interfaces/movements/movement.dto';
 import { CreateMovementDto } from '../interfaces/movements/create-movement.dto';
 import { UpdateMovementDto } from '../interfaces/movements/update-movement.dto';
 import { EnvironmentDevelopment } from '../../environments/environment.development';
+import { Buy } from '../interfaces/movements/buy.dto';
+import { BuyService } from './buy.service';
+import { Sell } from '../interfaces/movements/sell.dto';
+import { SellService } from './sell.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,10 +16,20 @@ import { EnvironmentDevelopment } from '../../environments/environment.developme
 export class MovementsService {
   private readonly apiUrl = EnvironmentDevelopment.apiUrl;
   private readonly http = inject(HttpClient);
+  private readonly buyService = inject(BuyService);
+  private readonly sellService = inject(SellService);
 
   // CRUD básico
   getAll(): Observable<Movement[]> {
     return this.http.get<Movement[]>(`${this.apiUrl}/api/Movement`);
+  }
+
+  getAllBuys():Observable<Buy[]>{
+    return this.buyService.getAll();
+  }
+
+  getAllSells(): Observable<Sell[]>{
+    return this.sellService.getAll();
   }
 
   getById(id: number): Observable<Movement> {

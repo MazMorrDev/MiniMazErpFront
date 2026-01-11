@@ -456,10 +456,10 @@ export class CreateMovementDialog implements OnInit {
 
   private executeMovement(movementType: MovementType, formValue: any, productId: number, movementDate: string): void {
     this.findOrCreateInventory(productId, formValue.quantity).pipe(
-      switchMap((inventory: Inventory) =>
-        this.createMovementDto(movementType, formValue, productId, movementDate, inventory.id)
-      ),
-      switchMap((dto: any) => this.callMovementService(movementType, dto))
+      switchMap((inventory: Inventory) => {
+        const dto = this.createMovementDto(movementType, formValue, productId, movementDate, inventory.id);
+        return this.callMovementService(movementType, dto);
+      })
     ).subscribe({
       next: () => this.handleSuccess(),
       error: (error) => this.handleError('Error al crear movimiento', error)
@@ -584,7 +584,6 @@ export class CreateMovementDialog implements OnInit {
   }
 
   private handleError(message: string, error: any): void {
-    console.error('Error:', error);
     this.isLoading.set(false);
 
     const errorMessage = error?.error?.message || message;
