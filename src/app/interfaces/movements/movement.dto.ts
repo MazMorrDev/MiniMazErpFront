@@ -4,5 +4,4 @@ export interface Movement {
   description: string;
   quantity: number;
   movementDate: string; // ISO
-  type?: 'IN' | 'OUT' | 'EXPENSE';
 }

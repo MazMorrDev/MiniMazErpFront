@@ -1,6 +1,5 @@
-import { Movement } from "./movement.dto";
-
-export interface Sell extends Movement {
+export interface Sell {
+    movementId: number;
     salePrice?: number;
     discountPercentage: number;
 }

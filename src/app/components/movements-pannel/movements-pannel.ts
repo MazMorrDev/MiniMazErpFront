@@ -19,17 +19,15 @@ import { lastValueFrom, Subject, takeUntil } from 'rxjs';
 import { ProductService } from '../../services/product.service';
 import { BuyService } from '../../services/buy.service';
 import { SellService } from '../../services/sell.service';
-import { ExpenseService } from '../../services/expense.service';
 import { InventoryService } from '../../services/inventory.service';
-import { MovementsService } from '../../services/movements.service'; // <-- NUEVO
+import { MovementsService } from '../../services/movements.service';
 
 // Interfaces
 import { Product } from '../../interfaces/inventory/product.dto';
 import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
-import { Expense } from '../../interfaces/movements/expense.dto';
 import { Inventory } from '../../interfaces/inventory/inventory.dto';
-import { Movement } from '../../interfaces/movements/movement.dto'; // <-- NUEVO
+import { Movement } from '../../interfaces/movements/movement.dto';
 
 // Components
 import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
@@ -77,7 +75,6 @@ export class MovementsPannel implements OnInit, OnDestroy {
   private readonly buyService = inject(BuyService);
   private readonly inventoryService = inject(InventoryService);
   private readonly sellService = inject(SellService);
-  private readonly expenseService = inject(ExpenseService);
   private readonly movementsService = inject(MovementsService); // <-- NUEVO
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
@@ -136,10 +133,10 @@ export class MovementsPannel implements OnInit, OnDestroy {
         this.loadInventories(),
         this.loadProducts()
       ]);
-      
+
       // Luego cargar movimientos
       await this.loadAllMovements();
-      
+
     } catch (error) {
       this.showErrorMessage('Error al cargar datos iniciales');
     } finally {
@@ -184,17 +181,16 @@ export class MovementsPannel implements OnInit, OnDestroy {
   async loadAllMovements(): Promise<void> {
     this.isLoading.set(true);
 
-    try {      
+    try {
       // 1. Obtener TODOS los movements primero (tienen inventoryId)
       const allMovements = await lastValueFrom(
         this.movementsService.getAll().pipe(takeUntil(this.destroy$))
       );
 
-      // 2. Obtener buys, sells, expenses
-      const [buys, sells, expenses] = await Promise.all([
+      // 2. Obtener buys, sells
+      const [buys, sells] = await Promise.all([
         lastValueFrom(this.buyService.getAll().pipe(takeUntil(this.destroy$))),
         lastValueFrom(this.sellService.getAll().pipe(takeUntil(this.destroy$))),
-        lastValueFrom(this.expenseService.getAll().pipe(takeUntil(this.destroy$)))
       ]);
 
       // 3. Crear mapa de movements por ID para acceso rápido
@@ -210,7 +206,7 @@ export class MovementsPannel implements OnInit, OnDestroy {
       // 4. Función para enriquecer datos
       const enrichData = (items: any[], type: MovementType): EnrichedMovement[] => {
         if (!items || items.length === 0) return [];
-        
+
         return items.map(item => {
           const movementId = item.movementId || item.id;
           const movementData = movementsMap.get(movementId);
@@ -236,13 +232,11 @@ export class MovementsPannel implements OnInit, OnDestroy {
       // 5. Enriquecer cada tipo
       const enrichedBuys = enrichData(buys || [], 'BUY');
       const enrichedSells = enrichData(sells || [], 'SELL');
-      const enrichedExpenses = enrichData(expenses || [], 'EXPENSE');
 
       // 6. Combinar todos
       const combinedMovements: EnrichedMovement[] = [
         ...enrichedBuys,
         ...enrichedSells,
-        ...enrichedExpenses
       ];
 
       // 8. Ordenar y guardar
@@ -298,14 +292,11 @@ export class MovementsPannel implements OnInit, OnDestroy {
         case 'SELL':
           await lastValueFrom(this.sellService.delete(movementId).pipe(takeUntil(this.destroy$)));
           break;
-        case 'EXPENSE':
-          await lastValueFrom(this.expenseService.delete(movementId).pipe(takeUntil(this.destroy$)));
-          break;
         default:
           this.showWarningMessage('Tipo de movimiento no reconocido');
           return;
       }
-      
+
       this.handleDeleteSuccess();
     } catch (error) {
       const errorMessage = movement._type === 'BUY' ? 'Error al eliminar compra' :
@@ -366,13 +357,13 @@ export class MovementsPannel implements OnInit, OnDestroy {
     }
 
     const inventory = inventories.find(inv => inv.id === movement.inventoryId);
-    
+
     if (!inventory) {
       return `Inv#${movement.inventoryId}`;
     }
 
     const product = products.find(p => p.id === inventory.productId);
-    
+
     if (!product) {
       return `Prod#${inventory.productId}`;
     }
@@ -382,7 +373,7 @@ export class MovementsPannel implements OnInit, OnDestroy {
 
   formatDate(dateString: string): string {
     if (!dateString) return 'Fecha inválida';
-    
+
     try {
       return new Date(dateString).toLocaleDateString('es-ES', {
         day: '2-digit',

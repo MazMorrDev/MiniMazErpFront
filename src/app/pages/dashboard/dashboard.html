@@ -126,10 +126,6 @@
                                 <mat-chip class="chip-out">
                                     <mat-icon>arrow_upward</mat-icon> SALIDA
                                 </mat-chip>
-                                } @else {
-                                <mat-chip class="chip-expense">
-                                    <mat-icon>money_off</mat-icon> GASTO
-                                </mat-chip>
                                 }
                             </td>
                         </ng-container>
@@ -138,9 +134,15 @@
                         <ng-container matColumnDef="quantity">
                             <th mat-header-cell *matHeaderCellDef>Cantidad</th>
                             <td mat-cell *matCellDef="let movement">
+                                @if (movement.type) {
                                 <span class="quantity-badge" [class]="movement.type.toLowerCase() + '-badge'">
-                                    {{ movement.quantity }} unidades
+                                    {{ movement.quantity }} 
                                 </span>
+                                } @else {
+                                <span class="quantity-badge">
+                                    {{ movement.quantity }}
+                                </span>
+                                }
                             </td>
                         </ng-container>
 
@@ -209,7 +211,7 @@
                             <th mat-header-cell *matHeaderCellDef>Estado</th>
                             <td mat-cell *matCellDef="let inventory">
                                 @let status = getProductStatus(inventory.stock);
-                                <mat-chip [color]="getStatusColor(status)" class="status-chip">
+                                <mat-chip class="status-chip">
                                     {{ status }}
                                 </mat-chip>
                             </td>

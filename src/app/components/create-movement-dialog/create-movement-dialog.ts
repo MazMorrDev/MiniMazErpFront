@@ -15,13 +15,10 @@ import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuyService } from '../../services/buy.service';
 import { SellService } from '../../services/sell.service';
-import { ExpenseService } from '../../services/expense.service';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../interfaces/inventory/product.dto';
-import { ExpenseType } from '../../enums/expense-type.enum';
 import { CreateBuyDto } from '../../interfaces/movements/create-buy.dto';
 import { CreateSellDto } from '../../interfaces/movements/create-sell.dto';
-import { CreateExpenseDto } from '../../interfaces/movements/create-expense.dto';
 import { CreateProductDto } from '../../interfaces/inventory/create-product.dto';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Observable, of, throwError } from 'rxjs';
@@ -32,7 +29,7 @@ import { UpdateInventoryDto } from '../../interfaces/inventory/update-inventory.
 import { LoginService } from '../../services/login.service';
 import { MovementsPannel } from '../movements-pannel/movements-pannel';
 
-type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
+type MovementType = 'BUY' | 'SELL';
 type ProductOption = 'EXISTING' | 'NEW';
 
 @Component({
@@ -60,7 +57,6 @@ export class CreateMovementDialog implements OnInit {
   private fb = inject(FormBuilder);
   private buyService = inject(BuyService);
   private sellService = inject(SellService);
-  private expenseService = inject(ExpenseService);
   private productService = inject(ProductService);
   private inventoryService = inject(InventoryService)
   private loginService = inject(LoginService);
@@ -92,16 +88,7 @@ export class CreateMovementDialog implements OnInit {
 
   movementTypes = [
     { value: 'BUY' as MovementType, label: 'Compra', icon: 'shopping_cart' },
-    { value: 'SELL' as MovementType, label: 'Venta', icon: 'point_of_sale' },
-    { value: 'EXPENSE' as MovementType, label: 'Gasto', icon: 'payments' }
-  ];
-
-  expenseTypes = [
-    { value: ExpenseType.RENT, label: 'Alquiler' },
-    { value: ExpenseType.UTILITIES, label: 'Servicios' },
-    { value: ExpenseType.SALARIES, label: 'Sueldos' },
-    { value: ExpenseType.MAINTENANCE, label: 'Mantenimiento' },
-    { value: ExpenseType.OTHER, label: 'Otros' }
+    { value: 'SELL' as MovementType, label: 'Venta', icon: 'point_of_sale' }
   ];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { products: Product[] }) {
@@ -157,7 +144,6 @@ export class CreateMovementDialog implements OnInit {
 
       // Campos condicionales
       unitPrice: [{ value: 0, disabled: false }, [Validators.required, Validators.min(0)]],
-      expenseType: [{ value: ExpenseType.OTHER, disabled: true }, [Validators.required]],
       totalPrice: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
       salePrice: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
       discountPercentage: [{ value: 0, disabled: true }, [Validators.min(0), Validators.max(100)]]
@@ -211,10 +197,6 @@ export class CreateMovementDialog implements OnInit {
         this.form.get('salePrice')?.enable();
         this.form.get('discountPercentage')?.enable();
         break;
-      case 'EXPENSE':
-        this.form.get('expenseType')?.enable();
-        this.form.get('totalPrice')?.enable();
-        break;
     }
   }
 
@@ -226,9 +208,6 @@ export class CreateMovementDialog implements OnInit {
       if (formControl) {
         formControl.clearValidators();
         formControl.setValue(0);
-        if (control === 'expenseType') {
-          formControl.setValue(ExpenseType.OTHER);
-        }
       }
     });
 
@@ -239,10 +218,6 @@ export class CreateMovementDialog implements OnInit {
       case 'SELL':
         this.form.get('salePrice')?.setValidators([Validators.required, Validators.min(0)]);
         this.form.get('discountPercentage')?.setValidators([Validators.min(0), Validators.max(100)]);
-        break;
-      case 'EXPENSE':
-        this.form.get('expenseType')?.setValidators([Validators.required]);
-        this.form.get('totalPrice')?.setValidators([Validators.required, Validators.min(0)]);
         break;
     }
 
@@ -493,16 +468,6 @@ export class CreateMovementDialog implements OnInit {
           salePrice: formValue.salePrice,
           discountPercentage: formValue.discountPercentage || undefined
         };
-      case 'EXPENSE':
-        return {
-          inventoryId: inventoryId,
-          productId: productId,
-          quantity: formValue.quantity,
-          description: formValue.description || '',
-          movementDate: movementDate,
-          totalPrice: formValue.totalPrice,
-          expenseType: formValue.expenseType
-        };
       default:
         throw new Error('Tipo de movimiento no válido');
     }
@@ -514,8 +479,6 @@ export class CreateMovementDialog implements OnInit {
         return this.buyService.create(dto);
       case 'SELL':
         return this.sellService.create(dto);
-      case 'EXPENSE':
-        return this.expenseService.create(dto);
       default:
         return throwError(() => new Error('Tipo de movimiento no válido'));
     }
