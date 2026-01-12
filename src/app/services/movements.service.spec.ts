@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Inventory } from '../pages/inventory-pannel/inventory-pannel';
+import { MovementsService } from './movements.service';
 
-describe('Inventory', () => {
-  let service: Inventory;
+describe('Movements', () => {
+  let service: MovementsService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(Inventory);
+    service = TestBed.inject(MovementsService);
   });
 
   it('should be created', () => {

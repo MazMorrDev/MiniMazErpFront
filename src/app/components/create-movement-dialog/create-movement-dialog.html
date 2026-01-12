@@ -19,7 +19,7 @@
 
     <!-- Producto -->
     <div class="form-section">
-      @if(form.get('movementType')?.value === 'BUY'){
+      @if(movementType() === 'BUY'){
       <!-- Para COMPRAS: Toggle entre producto existente o nuevo -->
       <div class="product-toggle-section">
         <mat-label class="section-label">Selección de Producto</mat-label>
@@ -36,13 +36,13 @@
       </div>
 
       <!-- Opción 1: Seleccionar producto existente -->
-      @if (form.get('productOption')?.value === 'EXISTING') {
+      @if (productOption() === 'EXISTING') {
       <div class="existing-product-section">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Seleccionar Producto</mat-label>
           <mat-select formControlName="productId">
             <mat-option [value]="null">-- Seleccionar Producto Existente --</mat-option>
-            @for (product of data.products; track product.id) {
+            @for (product of products(); track product.id) {
             <mat-option [value]="product.id">
               {{ product.name }} (ID: {{ product.id }})
             </mat-option>
@@ -57,7 +57,7 @@
       }
 
       <!-- Opción 2: Crear producto nuevo -->
-      @if (form.get('productOption')?.value === 'NEW') {
+      @if (productOption() === 'NEW') {
       <div class="new-product-section">
         <h4 class="section-title">Información del Nuevo Producto</h4>
 
@@ -86,12 +86,12 @@
       </div>
       }
       } @else {
-      <!-- Para VENTAS y GASTOS: Solo producto existente -->
+      <!-- Para VENTAS: Solo producto existente -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Producto</mat-label>
         <mat-select formControlName="productId">
           <mat-option [value]="null">-- Seleccionar Producto --</mat-option>
-          @for (product of data.products; track product.id) {
+          @for (product of products(); track product.id) {
           <mat-option [value]="product.id">
             {{ product.name }} (ID: {{ product.id }})
           </mat-option>
@@ -145,7 +145,7 @@
     </div>
 
     <!-- Campos específicos para COMPRA -->
-    @if (form.get('movementType')?.value === 'BUY') {
+    @if (movementType() === 'BUY') {
     <div class="conditional-section">
       <h4 class="section-title">Información de Compra</h4>
       <div class="form-section">
@@ -166,7 +166,7 @@
     }
 
     <!-- Campos específicos para VENTA -->
-    @if (form.get('movementType')?.value === 'SELL') {
+    @if (movementType() === 'SELL') {
     <div class="conditional-section">
       <h4 class="section-title">Información de Venta</h4>
       <div class="form-section">
@@ -199,44 +199,16 @@
           }
         </mat-form-field>
       </div>
+      
+      <!-- Precio final calculado automáticamente -->
+      @if (finalPrice() > 0) {
+      <div class="final-price-section">
+        <p><strong>Precio final con descuento:</strong> {{ finalPrice() | currency }}</p>
+      </div>
+      }
     </div>
     }
 
-    <!-- Campos específicos para GASTO -->
-    @if (form.get('movementType')?.value === 'EXPENSE') {
-    <div class="conditional-section">
-      <h4 class="section-title">Información de Gasto</h4>
-      <div class="form-section">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Tipo de Gasto</mat-label>
-          <mat-select formControlName="expenseType">
-            @for (expType of expenseTypes; track expType.value) {
-            <mat-option [value]="expType.value">{{ expType.label }}</mat-option>
-            }
-          </mat-select>
-          <mat-hint>Seleccione la categoría del gasto</mat-hint>
-          @if (form.get('expenseType')?.hasError('required') && form.get('expenseType')?.touched) {
-          <mat-error>Tipo de gasto es requerido</mat-error>
-          }
-        </mat-form-field>
-      </div>
-
-      <div class="form-section">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Total Gasto ($)</mat-label>
-          <input matInput type="number" min="0" step="0.01" formControlName="totalPrice" placeholder="Ej: 150.50">
-          <span matTextPrefix>$&nbsp;</span>
-          <mat-hint>Número decimal (2 decimales)</mat-hint>
-          @if (form.get('totalPrice')?.hasError('required') && form.get('totalPrice')?.touched) {
-          <mat-error>Total es requerido</mat-error>
-          }
-          @if (form.get('totalPrice')?.hasError('min')) {
-          <mat-error>Total no puede ser negativo</mat-error>
-          }
-        </mat-form-field>
-      </div>
-    </div>
-    }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

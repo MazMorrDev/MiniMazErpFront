@@ -8,6 +8,6 @@ import { MovementsPannel } from "../../components/movements-pannel/movements-pan
   templateUrl: './movements.html',
   styleUrl: './movements.scss',
 })
-export class Movements {
+export class MovementsPage {
 
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,7 +32,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class Register implements OnInit {
+export class RegisterPage implements OnInit {
   name: string = '';
   password: string = '';
   confirmPassword: string = '';
@@ -43,6 +43,7 @@ export class Register implements OnInit {
   successMessage: string = '';
   passwordStrength: 'weak' | 'medium' | 'strong' = 'weak';
 
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly registerService = inject(RegisterService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -190,12 +191,16 @@ export class Register implements OnInit {
     const panelClass = type === 'success' ? 'success-snackbar' :
       type === 'warning' ? 'warning-snackbar' : 'error-snackbar';
 
+    // Forzar una nueva detección de cambios después de mostrar el SnackBar
     this.snackBar.open(message, 'Cerrar', {
       duration: 5000,
       panelClass: [panelClass],
       horizontalPosition: 'center',
       verticalPosition: 'top'
     });
+
+    // Marcar para verificación después de que el SnackBar se haya renderizado
+    this.cdr.detectChanges();
   }
 
   private clearMessages(): void {

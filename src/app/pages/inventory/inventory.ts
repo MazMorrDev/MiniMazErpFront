@@ -8,6 +8,6 @@ import { InventoryPannel } from "../../components/inventory-pannel/inventory-pan
   templateUrl: './inventory.html',
   styleUrl: './inventory.scss',
 })
-export class Inventory {
+export class InventoryPage {
 
 }

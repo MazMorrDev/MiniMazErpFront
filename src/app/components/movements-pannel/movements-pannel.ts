@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,19 +13,41 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom, Subject, takeUntil } from 'rxjs';
+
+// Services
 import { ProductService } from '../../services/product.service';
 import { BuyService } from '../../services/buy.service';
 import { SellService } from '../../services/sell.service';
-import { ExpenseService } from '../../services/expense.service';
+import { InventoryService } from '../../services/inventory.service';
+import { MovementsService } from '../../services/movements.service';
+
+// Interfaces
 import { Product } from '../../interfaces/inventory/product.dto';
 import { Buy } from '../../interfaces/movements/buy.dto';
 import { Sell } from '../../interfaces/movements/sell.dto';
-import { Expense } from '../../interfaces/movements/expense.dto';
-import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
-import { UpdateProductDialog } from '../update-product-dialog/update-product-dialog';
+import { Inventory } from '../../interfaces/inventory/inventory.dto';
+import { Movement } from '../../interfaces/movements/movement.dto';
 
-type MovementUnion = Buy | Sell | Expense;
+// Components
+import { CreateMovementDialog } from '../create-movement-dialog/create-movement-dialog';
+
+// Tipo actualizado para movimientos enriquecidos
+interface EnrichedMovement extends Movement {
+  _type: 'BUY' | 'SELL' | 'EXPENSE';
+  unitPrice?: number;
+  sellPrice?: number;
+  expenseType?: string;
+  totalPrice?: number;
+}
+
 type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
+
+interface MovementTypeInfo {
+  value: MovementType;
+  label: string;
+  icon: string;
+}
 
 @Component({
   standalone: true,
@@ -47,233 +69,373 @@ type MovementType = 'BUY' | 'SELL' | 'EXPENSE';
   templateUrl: './movements-pannel.html',
   styleUrl: './movements-pannel.scss'
 })
-export class MovementsPannel {
-  private productService = inject(ProductService);
-  private buyService = inject(BuyService);
-  private sellService = inject(SellService);
-  private expenseService = inject(ExpenseService);
-  private snackBar = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+export class MovementsPannel implements OnInit, OnDestroy {
+  // Services
+  private readonly productService = inject(ProductService);
+  private readonly buyService = inject(BuyService);
+  private readonly inventoryService = inject(InventoryService);
+  private readonly sellService = inject(SellService);
+  private readonly movementsService = inject(MovementsService); // <-- NUEVO
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
+
+  private readonly destroy$ = new Subject<void>();
 
   // Signals
-  products = signal<Product[]>([]);
-  allMovements = signal<MovementUnion[]>([]);
-  isLoading = signal(false);
-  searchQuery = signal('');
+  readonly products = signal<Product[]>([]);
+  readonly inventories = signal<Inventory[]>([]);
+  readonly allMovements = signal<EnrichedMovement[]>([]); // <-- CAMBIADO
+  readonly isLoading = signal(false);
+  readonly searchQuery = signal('');
 
-  // Filtros adicionales (opcionales)
-  filters = signal<{
-    productId?: number;
-    movementType?: MovementType;
-  }>({});
-
-  // Computed signals
-  filteredMovements = computed(() => {
-    const movements = this.allMovements();
-    const query = this.searchQuery().toLowerCase();
-    const filter = this.filters();
-
-    return movements.filter(movement => {
-      // 1. Filtro de búsqueda
-      if (query) {
-        const productName = this.getProductName(movement).toLowerCase();
-        const description = (movement.description || '').toLowerCase();
-        const matchesSearch = productName.includes(query) || description.includes(query);
-        if (!matchesSearch) return false;
-      }
-
-      // 2. Filtro por producto
-      if (filter.productId && movement.productId !== filter.productId) {
-        return false;
-      }
-
-      // 3. Filtro por tipo de movimiento
-      if (filter.movementType) {
-        const movementType = this.getMovementType(movement);
-        if (movementType !== filter.movementType) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  });
-
-  // Columnas de la tabla
-  displayedColumns = signal<string[]>([
-    'date',
-    'product',
-    'type',
-    'description',
-    'quantity',
-    'details',
-    'actions'
-  ]);
-
-  // Tipos para UI
-  movementTypes = signal<{ value: MovementType, label: string, icon: string }[]>([
+  // Constants
+  readonly movementTypes: MovementTypeInfo[] = [
     { value: 'BUY', label: 'Compra', icon: 'shopping_cart' },
     { value: 'SELL', label: 'Venta', icon: 'point_of_sale' },
     { value: 'EXPENSE', label: 'Gasto', icon: 'payments' }
+  ];
+
+  readonly displayedColumns = signal<string[]>([
+    'date', 'product', 'type', 'description', 'quantity', 'details', 'actions'
   ]);
 
-  constructor() {
-    this.loadProducts();
-    this.loadAllMovements();
+  // Computed signals
+  readonly filteredMovements = computed(() => {
+    const movements = this.allMovements();
+    const query = this.searchQuery().toLowerCase();
+
+    if (!query) return movements;
+
+    return movements.filter(movement => {
+      const productName = this.getProductName(movement).toLowerCase();
+      const description = (movement.description || '').toLowerCase();
+
+      return productName.includes(query) || description.includes(query);
+    });
+  });
+
+  ngOnInit(): void {
+    this.loadInitialData();
   }
 
-  // --- MÉTODOS PRINCIPALES ---
-  loadProducts() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // --- MAIN METHODS ---
+  private async loadInitialData(): Promise<void> {
     this.isLoading.set(true);
-    this.productService.getAll().subscribe({
-      next: (products) => {
-        this.products.set(products);
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Error cargando productos:', error);
-        this.snackBar.open('Error al cargar productos', 'Cerrar', { duration: 3000 });
-        this.isLoading.set(false);
-      }
+
+    try {
+      // Cargar inventarios y productos primero
+      await Promise.all([
+        this.loadInventories(),
+        this.loadProducts()
+      ]);
+
+      // Luego cargar movimientos
+      await this.loadAllMovements();
+
+    } catch (error) {
+      this.showErrorMessage('Error al cargar datos iniciales');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private loadProducts(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.productService.getAll()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (products) => {
+            this.products.set(products);
+            resolve();
+          },
+          error: (error) => {
+            this.showErrorMessage('Error al cargar productos');
+            reject(error);
+          }
+        });
     });
   }
 
-  loadAllMovements() {
+  private loadInventories(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.inventoryService.getAll()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (inventories) => {
+            this.inventories.set(inventories);
+            resolve();
+          },
+          error: (error) => {
+            this.showErrorMessage('Error al cargar inventarios');
+            reject(error);
+          }
+        });
+    });
+  }
+
+  async loadAllMovements(): Promise<void> {
     this.isLoading.set(true);
-    Promise.all([
-      this.buyService.getAll().toPromise(),
-      this.sellService.getAll().toPromise(),
-      this.expenseService.getAll().toPromise()
-    ]).then(([buys, sells, expenses]) => {
-      const allMovements: MovementUnion[] = [
-        ...(buys || []),
-        ...(sells || []),
-        ...(expenses || [])
-      ];
-      allMovements.sort((a, b) =>
-        new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()
+
+    try {
+      // 1. Obtener TODOS los movements primero (tienen inventoryId)
+      const allMovements = await lastValueFrom(
+        this.movementsService.getAll().pipe(takeUntil(this.destroy$))
       );
-      this.allMovements.set(allMovements);
+
+      // 2. Obtener buys, sells
+      const [buys, sells] = await Promise.all([
+        lastValueFrom(this.buyService.getAll().pipe(takeUntil(this.destroy$))),
+        lastValueFrom(this.sellService.getAll().pipe(takeUntil(this.destroy$))),
+      ]);
+
+      // 3. Crear mapa de movements por ID para acceso rápido
+      const movementsMap = new Map<number, Movement>();
+      if (allMovements) {
+        allMovements.forEach(movement => {
+          if (movement?.id) {
+            movementsMap.set(movement.id, movement);
+          }
+        });
+      }
+
+      // 4. Función para enriquecer datos
+      const enrichData = (items: any[], type: MovementType): EnrichedMovement[] => {
+        if (!items || items.length === 0) return [];
+
+        return items.map(item => {
+          const movementId = item.movementId || item.id;
+          const movementData = movementsMap.get(movementId);
+
+          // Crear objeto enriquecido
+          const enriched: EnrichedMovement = {
+            // Campos base de Movement
+            id: movementId,
+            inventoryId: movementData?.inventoryId || item.inventoryId,
+            description: movementData?.description || item.description,
+            quantity: movementData?.quantity || item.quantity,
+            movementDate: movementData?.movementDate || item.movementDate,
+            // Tipo
+            _type: type,
+            // Campos específicos según tipo
+            ...item
+          };
+
+          return enriched;
+        }).filter(item => item !== null);
+      };
+
+      // 5. Enriquecer cada tipo
+      const enrichedBuys = enrichData(buys || [], 'BUY');
+      const enrichedSells = enrichData(sells || [], 'SELL');
+
+      // 6. Combinar todos
+      const combinedMovements: EnrichedMovement[] = [
+        ...enrichedBuys,
+        ...enrichedSells,
+      ];
+
+      // 8. Ordenar y guardar
+      this.sortMovementsByDate(combinedMovements);
+      this.allMovements.set(combinedMovements);
+
+    } catch (error) {
+      this.showErrorMessage('Error al cargar movimientos');
+    } finally {
       this.isLoading.set(false);
-    }).catch(error => {
-      console.error('Error cargando movimientos:', error);
-      this.snackBar.open('Error al cargar movimientos', 'Cerrar', { duration: 3000 });
-      this.isLoading.set(false);
-    });
+    }
   }
 
-  openAddMovementDialog() {
+  private sortMovementsByDate(movements: EnrichedMovement[]): void {
+    movements.sort((a, b) =>
+      new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()
+    );
+  }
+
+  // --- UI METHODS ---
+  openAddMovementDialog(): void {
     const dialogRef = this.dialog.open(CreateMovementDialog, {
       width: '700px',
-      data: {
-        products: this.products()
-      }
+      data: { products: this.products() }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'success') {
-        this.loadAllMovements();
-        this.snackBar.open('Movimiento registrado exitosamente', 'Cerrar', { duration: 3000 });
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result === 'success') {
+          this.loadAllMovements();
+          this.showSuccessMessage('Movimiento registrado exitosamente');
+        }
+      });
   }
 
-  clearSearch() {
+  clearSearch(): void {
     this.searchQuery.set('');
   }
 
-  remove(movement: MovementUnion) {
+  async remove(movement: EnrichedMovement): Promise<void> {
     if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
 
     this.isLoading.set(true);
     const movementId = movement.id;
 
-    if (this.isBuy(movement)) {
-      this.buyService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar compra', error)
-      });
-    } else if (this.isSell(movement)) {
-      this.sellService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar venta', error)
-      });
-    } else if (this.isExpense(movement)) {
-      this.expenseService.delete(movementId).subscribe({
-        next: () => this.handleDeleteSuccess(),
-        error: (error) => this.handleError('Error al eliminar gasto', error)
-      });
-    } else {
-      this.snackBar.open('Tipo de movimiento no reconocido', 'Cerrar', { duration: 3000 });
+    try {
+      // Usar el tipo para saber qué servicio llamar
+      switch (movement._type) {
+        case 'BUY':
+          await lastValueFrom(this.buyService.delete(movementId).pipe(takeUntil(this.destroy$)));
+          break;
+        case 'SELL':
+          await lastValueFrom(this.sellService.delete(movementId).pipe(takeUntil(this.destroy$)));
+          break;
+        default:
+          this.showWarningMessage('Tipo de movimiento no reconocido');
+          return;
+      }
+
+      this.handleDeleteSuccess();
+    } catch (error) {
+      const errorMessage = movement._type === 'BUY' ? 'Error al eliminar compra' :
+        movement._type === 'SELL' ? 'Error al eliminar venta' :
+          'Error al eliminar gasto';
+      this.handleError(errorMessage, error);
+    } finally {
       this.isLoading.set(false);
     }
   }
 
-  // --- MÉTODOS DE AYUDA ---
-  private handleDeleteSuccess() {
-    this.snackBar.open('Movimiento eliminado exitosamente', 'Cerrar', { duration: 3000 });
+  // --- HELPER METHODS ---
+  private handleDeleteSuccess(): void {
+    this.showSuccessMessage('Movimiento eliminado exitosamente');
     this.loadAllMovements();
   }
 
-  private handleError(message: string, error: any) {
-    console.error(message, error);
-    this.snackBar.open(`${message}: ${error?.message || 'Error desconocido'}`, 'Cerrar', { duration: 5000 });
-    this.isLoading.set(false);
+  private handleError(message: string, error: any): void {
+    const errorDetail = error?.error?.message || error?.message || 'Error desconocido';
+    this.showErrorMessage(`${message}: ${errorDetail}`);
   }
 
-  getMovementType(movement: MovementUnion): MovementType {
-    if (this.isBuy(movement)) return 'BUY';
-    if (this.isSell(movement)) return 'SELL';
-    return 'EXPENSE';
+  // --- TYPE GUARDS (actualizadas) ---
+  isBuy(movement: EnrichedMovement): boolean {
+    return movement._type === 'BUY';
   }
 
-  isBuy(movement: MovementUnion): movement is Buy {
-    return (movement as Buy).unitPrice !== undefined;
+  isExpense(movement: EnrichedMovement): boolean {
+    return movement._type === 'EXPENSE';
   }
 
-  isSell(movement: MovementUnion): movement is Sell {
-    const hasBuyProperties = 'unitPrice' in movement;
-    const hasExpenseProperties = 'expenseType' in movement && 'totalPrice' in movement;
-    return !hasBuyProperties && !hasExpenseProperties && 'id' in movement;
+  isSell(movement: EnrichedMovement): boolean {
+    return movement._type === 'SELL';
   }
 
-  isExpense(movement: MovementUnion): movement is Expense {
-    return (movement as Expense).expenseType !== undefined;
+  getMovementType(movement: EnrichedMovement): MovementType {
+    return movement._type;
   }
 
-  getProductName(movement: MovementUnion): string {
-    const product = this.products().find(p => p.id === movement.productId);
-    return product?.name || 'N/A';
+  // --- UI DATA METHODS ---
+  getProductName(movement: EnrichedMovement): string {
+    // Si el movimiento no tiene datos, retornar placeholder
+    if (!movement || typeof movement.id === 'undefined') {
+      return 'Cargando...';
+    }
+
+    // Verificar que tenemos inventoryId
+    if (typeof movement.inventoryId === 'undefined') {
+      return 'Sin inventario';
+    }
+
+    const inventories = this.inventories();
+    const products = this.products();
+
+    // Si no hay datos cargados aún
+    if (inventories.length === 0 || products.length === 0) {
+      return 'Cargando datos...';
+    }
+
+    const inventory = inventories.find(inv => inv.id === movement.inventoryId);
+
+    if (!inventory) {
+      return `Inv#${movement.inventoryId}`;
+    }
+
+    const product = products.find(p => p.id === inventory.productId);
+
+    if (!product) {
+      return `Prod#${inventory.productId}`;
+    }
+
+    return product.name;
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'Fecha inválida';
+
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
   }
 
-  getMovementTypeInfo(movement: MovementUnion) {
-    const type = this.getMovementType(movement);
-    return this.movementTypes().find(t => t.value === type) ?? {
+  getMovementTypeInfo(movement: EnrichedMovement): MovementTypeInfo {
+    const type = movement._type;
+    return this.movementTypes.find(t => t.value === type) || {
       value: type,
       label: type,
       icon: 'help'
     };
   }
 
-  getMovementDetails(movement: MovementUnion): string {
+  getMovementDetails(movement: EnrichedMovement): string {
     if (this.isBuy(movement)) {
-      return `Precio unitario: $${movement.unitPrice.toFixed(2)} | Total: $${(movement.unitPrice * movement.quantity).toFixed(2)}`;
+      const unitPrice = (movement as any).unitPrice;
+      if (typeof unitPrice === 'undefined') {
+        return 'Precio no disponible';
+      }
+      const total = unitPrice * movement.quantity;
+      return `Precio unitario: $${unitPrice.toFixed(2)} | Total: $${total.toFixed(2)}`;
     }
+
     if (this.isExpense(movement)) {
-      return `Total: $${movement.totalPrice.toFixed(2)}`;
+      const totalPrice = (movement as any).totalPrice;
+      if (typeof totalPrice === 'undefined') {
+        return 'Precio no disponible';
+      }
+      return `Total: $${totalPrice.toFixed(2)}`;
     }
+
     return `Cantidad: ${movement.quantity}`;
   }
 
+  // --- SNACKBAR HELPERS ---
+  private showSuccessMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
 
+  private showErrorMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private showWarningMessage(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 3000,
+      panelClass: ['warning-snackbar']
+    });
+  }
 }

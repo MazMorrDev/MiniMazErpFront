@@ -146,12 +146,49 @@
   }
 }
 
-/* Chips */
+// ========== CLASES PARA CHIPS DE STOCK ==========
 .stock-chip {
-  border-radius: 12px;
   font-weight: 500;
   min-width: 60px;
   justify-content: center;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+
+  // Estado: Crítico (stock 0 o negativo)
+  &.stock-critical {
+    background-color: var(--stock-critical-bg);
+    color: var(--stock-critical-color);
+    --mat-chip-container-color: var(--stock-critical-bg);
+    --mat-chip-label-text-color: var(--stock-critical-color);
+    border: 1px solid color-mix(in srgb, var(--stock-critical-color) 20%, transparent);
+  }
+
+  // Estado: Bajo stock (< 10)
+  &.stock-low {
+    background-color: var(--stock-low-bg);
+    color: var(--stock-low-color);
+    --mat-chip-container-color: var(--stock-low-bg);
+    --mat-chip-label-text-color: var(--stock-low-color);
+    border: 1px solid color-mix(in srgb, var(--stock-low-color) 20%, transparent);
+  }
+
+  // Estado: Stock normal (≥ 10)
+  &.stock-normal {
+    background-color: var(--stock-normal-bg);
+    color: var(--stock-normal-color);
+    --mat-chip-container-color: var(--stock-normal-bg);
+    --mat-chip-label-text-color: var(--stock-normal-color);
+    border: 1px solid color-mix(in srgb, var(--stock-normal-color) 20%, transparent);
+  }
+
+  // Estado: Stock alto (opcional)
+  &.stock-high {
+    background-color: var(--stock-high-bg);
+    color: var(--stock-high-color);
+    --mat-chip-container-color: var(--stock-high-bg);
+    --mat-chip-label-text-color: var(--stock-high-color);
+    border: 1px solid color-mix(in srgb, var(--stock-high-color) 20%, transparent);
+  }
 }
 
 /* Empty State */

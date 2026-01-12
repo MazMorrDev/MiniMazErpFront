@@ -100,7 +100,6 @@
         [disabled]="!isFormValid() || isLoading">
         <mat-icon class="register-icon">person_add</mat-icon>
         @if (isLoading) {
-        <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
         <span class="loading-text">Creando cuenta...</span>
         } @else {
         <span>Crear Cuenta</span>

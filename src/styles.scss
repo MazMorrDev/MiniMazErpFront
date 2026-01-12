@@ -11,15 +11,57 @@
 
 // Theme
 html {
-  @include mat.theme((color: (primary: mat.$rose-palette,
-        tertiary: mat.$red-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    ));
+  @include mat.theme((color: (
+      primary: mat.$rose-palette,
+      accent: mat.$blue-palette,
+      warn: mat.$red-palette,
+      tertiary: mat.$green-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
 }
 
-// Base
+// ========== CUSTOM PROPERTIES PARA CHIPS ==========
+// Versión simplificada que funciona sin $theme
+:root {
+  // Colores para chips basados en las paletas que definiste
+  
+  // Rosa (primary) - tonos
+  --chip-primary-40: #F48FB1;  // Rosa medio
+  --chip-primary-90: #FCE4EC;  // Rosa muy claro
+  --chip-primary-10: #880E4F;  // Rosa oscuro
+  
+  // Azul (accent) - tonos  
+  --chip-accent-40: #64B5F6;   // Azul medio
+  --chip-accent-90: #E3F2FD;   // Azul muy claro
+  --chip-accent-10: #0D47A1;   // Azul oscuro
+  
+  // Rojo (warn) - tonos
+  --chip-warn-40: #EF5350;     // Rojo medio
+  --chip-warn-90: #FFEBEE;     // Rojo muy claro
+  --chip-warn-10: #B71C1C;     // Rojo oscuro
+  
+  // Verde (tertiary) - tonos
+  --chip-tertiary-40: #66BB6A;  // Verde medio
+  --chip-tertiary-90: #E8F5E9;  // Verde muy claro
+  --chip-tertiary-10: #1B5E20;  // Verde oscuro
+  
+  // Clases específicas para chips de stock
+  --stock-critical-bg: var(--chip-warn-90);
+  --stock-critical-color: var(--chip-warn-10);
+  
+  --stock-low-bg: var(--chip-accent-90);
+  --stock-low-color: var(--chip-accent-10);
+  
+  --stock-normal-bg: var(--chip-primary-90);
+  --stock-normal-color: var(--chip-primary-10);
+  
+  --stock-high-bg: var(--chip-tertiary-90);
+  --stock-high-color: var(--chip-tertiary-10);
+}
+
+// ========== BASE STYLES ==========
 html {
   overflow-x: hidden;
   width: 100%;
