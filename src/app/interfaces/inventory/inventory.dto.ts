@@ -1,6 +1,6 @@
 export interface Inventory {
     id: number;
-    clientId: number;
+    userId: number;
     productId: number;
     stock: number;
 }

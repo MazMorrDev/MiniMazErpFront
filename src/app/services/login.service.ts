@@ -7,8 +7,8 @@ import { EnvironmentDevelopment } from '../../environments/environment.developme
 
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRATION_KEY = 'token_expiration';
-const CLIENT_ID_KEY = 'client_id';
-const CLIENT_NAME_KEY = 'client_name';
+const USER_ID_KEY = 'user_id';
+const USER_NAME_KEY = 'user_name';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +19,7 @@ export class LoginService {
   private readonly apiUrl = EnvironmentDevelopment.apiUrl;
 
   login(loginRequest: LoginRequest) {
-    const url = `${this.apiUrl}/api/Client/login`;
+    const url = `${this.apiUrl}/api/User/login`;
     return this.http.post<ApiTokenResponse>(url, loginRequest);
   }
 
@@ -28,8 +28,8 @@ export class LoginService {
 
     // Guardar datos del usuario
     if (tokenResponse.user) {
-      localStorage.setItem(CLIENT_ID_KEY, tokenResponse.user.id.toString());
-      localStorage.setItem(CLIENT_NAME_KEY, tokenResponse.user.name);
+      localStorage.setItem(USER_ID_KEY, tokenResponse.user.id.toString());
+      localStorage.setItem(USER_NAME_KEY, tokenResponse.user.name);
     }
 
     let expirationTime: number;
@@ -47,19 +47,19 @@ export class LoginService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  getCurrentClientName(): string | null {
-    return localStorage.getItem(CLIENT_NAME_KEY);
+  getCurrentUserName(): string | null {
+    return localStorage.getItem(USER_NAME_KEY);
   }
 
-  getCurrentClientId(): number | null {
-    const clientIdStr = localStorage.getItem(CLIENT_ID_KEY);
-    return clientIdStr ? parseInt(clientIdStr, 10) : null;
+  getCurrentUserId(): number | null {
+    const userIdStr = localStorage.getItem(USER_ID_KEY);
+    return userIdStr ? parseInt(userIdStr, 10) : null;
   }
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(CLIENT_ID_KEY);
-    localStorage.removeItem(CLIENT_NAME_KEY);
+    localStorage.removeItem(USER_ID_KEY);
+    localStorage.removeItem(USER_NAME_KEY);
     localStorage.removeItem(TOKEN_EXPIRATION_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
     this.router.navigate(['/login']);

@@ -12,7 +12,7 @@ export class RegisterService {
   private readonly apiUrl = EnvironmentDevelopment.apiUrl;
 
   register(registerRequest: RegisterRequest) {
-    const url = `${this.apiUrl}/api/Client/register`;
+    const url = `${this.apiUrl}/api/User/register`;
     return this.http.post<ApiTokenResponse>(url, registerRequest);
   }
 }

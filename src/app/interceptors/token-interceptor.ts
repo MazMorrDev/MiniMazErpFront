@@ -10,8 +10,8 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
 
   // URLs que NO requieren token
   const excludedUrls = [
-    '/api/Client/login',
-    '/api/Client/register'
+    '/api/User/login',
+    '/api/User/register'
   ];
 
   // Verificar si la URL actual está excluida
