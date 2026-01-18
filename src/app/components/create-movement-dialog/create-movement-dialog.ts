@@ -365,25 +365,25 @@ export class CreateMovementDialog implements OnInit {
   }
 
   private findOrCreateInventory(productId: number, initialStock: number): Observable<Inventory> {
-    const clientId = this.loginService.getCurrentClientId();
+    const userId = this.loginService.getCurrentUserId();
 
-    // Validar cliente ANTES de hacer cualquier operación
-    if (!clientId) {
+    // Validar usuario ANTES de hacer cualquier operación
+    if (!userId) {
       this.snackBar.open('Usuario no autenticado. Por favor, inicie sesión.', 'Cerrar', { duration: 3000 });
-      return throwError(() => new Error('Cliente no autenticado'));
+      return throwError(() => new Error('Usuario no autenticado'));
     }
 
     return this.inventoryService.getAll().pipe(
       switchMap((inventories: Inventory[]) => {
-        // Buscar inventario específico para este cliente y producto
+        // Buscar inventario específico para este Usuario y producto
         const existingInventory = inventories.find(inv =>
-          inv.productId === productId && inv.clientId === clientId
+          inv.productId === productId && inv.userId === userId
         );
 
         if (existingInventory) {
           // Si existe, actualizar el stock
           const updateDto: UpdateInventoryDto = {
-            clientId: clientId,
+            userId: userId,
             productId: productId,
             stock: existingInventory.stock + initialStock
           };
@@ -397,7 +397,7 @@ export class CreateMovementDialog implements OnInit {
         } else {
           // Crear nuevo inventario
           const createDto: CreateInventoryDto = {
-            clientId: clientId,
+            userId: userId,
             productId: productId,
             stock: initialStock
           };
@@ -409,7 +409,7 @@ export class CreateMovementDialog implements OnInit {
         // Manejar error específico de "no encontrado" vs otros errores
         if (error.status === 404) {
           // No hay inventarios aún (primer producto)
-          return this.createNewInventory(clientId, productId, initialStock);
+          return this.createNewInventory(userId, productId, initialStock);
         }
 
         this.handleError('Error al gestionar inventario', error);
@@ -419,9 +419,9 @@ export class CreateMovementDialog implements OnInit {
   }
 
   // Método auxiliar para crear inventario nuevo
-  private createNewInventory(clientId: number, productId: number, stock: number): Observable<Inventory> {
+  private createNewInventory(userId: number, productId: number, stock: number): Observable<Inventory> {
     const createDto: CreateInventoryDto = {
-      clientId: clientId,
+      userId: userId,
       productId: productId,
       stock: stock
     };
