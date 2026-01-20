@@ -266,8 +266,14 @@ export class MovementsPannel implements OnInit, OnDestroy {
     dialogRef.afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
-        if (result === 'success') {
-          this.loadAllMovements();
+        if (result) {
+          // Recargar productos también (por si se creó uno nuevo)
+          this.loadInventories().then(() => {
+            this.loadProducts().then(() => {
+              // Luego recargar movimientos
+              this.loadAllMovements();
+            });
+          })
           this.showSuccessMessage('Movimiento registrado exitosamente');
         }
       });

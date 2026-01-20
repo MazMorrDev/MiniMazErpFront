@@ -118,7 +118,6 @@ export class InventoryPannel implements OnInit {
         error: (error) => {
           console.error('Error loading data:', error);
           this.isLoading.set(false);
-          // Aquí podrías mostrar un snackbar de error
         }
       });
   }
@@ -159,7 +158,7 @@ export class InventoryPannel implements OnInit {
     dialogRef.afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(result => {
-        if (result === 'updated') {
+        if (result) {
           this.loadData();
         }
       });
