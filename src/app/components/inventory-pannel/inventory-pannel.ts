@@ -132,7 +132,6 @@ export class InventoryPannel implements OnInit {
   }
 
   getStockClass(stock: number): string {
-    if (stock <= 0) return 'stock-critical';
     if (stock < 10) return 'stock-low';
     return 'stock-normal';
   }
